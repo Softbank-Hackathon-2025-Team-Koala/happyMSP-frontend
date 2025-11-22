@@ -217,19 +217,19 @@
         <button id="disconnectBtn" class="disconnect-btn" onclick="disconnectSSE()" style="display: none;">연결 종료</button>
 
         <div id="status"></div>
-        
+
         <!-- ECR 푸시 단계 서비스 카드 -->
         <div id="ecrCardsContainer" class="service-cards-container">
             <div class="cards-title">🗂️ 빌드 및 ECR 푸시 진행상황</div>
             <div class="cards-grid" id="ecrCardsGrid"></div>
         </div>
-        
+
         <!-- K8s 배포 단계 서비스 카드 -->
         <div id="serviceCardsContainer" class="service-cards-container">
             <div class="cards-title">☸️ EKS 배포 진행상황</div>
             <div class="cards-grid" id="cardsGrid"></div>
         </div>
-        
+
         <div id="logContainer" class="log-container"></div>
     </div>
 
@@ -247,7 +247,7 @@
 
         function createECRServiceCard(serviceName) {
             if (ecrCardsMap[serviceName]) return;
-            
+
             const grid = document.getElementById('ecrCardsGrid');
             const card = document.createElement('div');
             card.className = 'service-card';
@@ -319,26 +319,26 @@
             try {
                 const encodedUrl = encodeURIComponent(repoUrl);
                 const response = await fetch(`/api/repository?url=${encodedUrl}`);
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     const state = data.state;
 
                     if (state === 'DEPLOYING' && data.repository && data.repository.services) {
                         const services = data.repository.services;
-                        
+
                         document.getElementById('ecrCardsContainer').classList.add('show');
-                        
+
                         services.forEach(service => {
                             const serviceName = service.serviceName;
                             const serviceStatus = service.status;
-                            
+
                             if (!ecrCardsMap[serviceName]) {
                                 createECRServiceCard(serviceName);
                             }
-                            
+
                             updateECRServiceCard(serviceName, serviceStatus);
-                            
+
                             if (!serviceStatusMap[serviceName] || serviceStatusMap[serviceName] !== serviceStatus) {
                                 if (serviceStatus === 'PENDING') {
                                     addLog(`🔍 ${serviceName}: Git Repository 스캔 중...`, 'info');
@@ -350,7 +350,7 @@
                                 serviceStatusMap[serviceName] = serviceStatus;
                             }
                         });
-                        
+
                         const allPushed = services.every(s => s.status === 'PUSHED');
                         if (allPushed) {
                             addLog('📦 모든 서비스 ECR 푸시 완료', 'stage-success');
@@ -382,7 +382,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ repositoryUrl: repoUrl })
                 });
-                
+
                 if (response.ok) {
                     startPolling(repoUrl);
                 } else {
@@ -523,8 +523,8 @@
                     // initializeServiceCards 함수가 .show 클래스를 추가하므로 여기서 실행
                     if (data && data.payload && data.payload.services) {
                         initializeServiceCards(data.payload.services.length);
-                        data.payload.services.forEach(service => { 
-                            createServiceCard(service.serviceName); 
+                        data.payload.services.forEach(service => {
+                            createServiceCard(service.serviceName);
                         });
                     }
                 }, 3000); // 3초 딜레이
@@ -699,8 +699,8 @@
             }, 1000);
         }
 
-        window.addEventListener('beforeunload', () => { 
-            if (eventSource) eventSource.close(); 
+        window.addEventListener('beforeunload', () => {
+            if (eventSource) eventSource.close();
             stopPolling();
         });
     </script>
