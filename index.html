@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>배포 모니터링</title>
     <style>
-        /* 기존 스타일과 동일하므로 생략 (변경 없음) */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -22,12 +21,7 @@
             margin: 0 auto;
             width: 100%;
         }
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-            text-align: center;
-            font-size: 28px;
-        }
+        h1 { color: #333; margin-bottom: 30px; text-align: center; font-size: 28px; }
 
         .stage-indicator {
             display: none;
@@ -66,57 +60,36 @@
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3); }
         button:active { transform: translateY(0); }
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
+        button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
 
         .disconnect-btn {
             background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
             margin-top: 10px;
         }
-        .disconnect-btn:hover {
-            box-shadow: 0 10px 20px rgba(220, 53, 69, 0.3);
-        }
+        .disconnect-btn:hover { box-shadow: 0 10px 20px rgba(220, 53, 69, 0.3); }
 
-        .status {
-            margin-top: 20px;
-            padding: 16px;
-            border-radius: 10px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        .status.connected {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .status.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
+        .status { margin-top: 20px; padding: 16px; border-radius: 10px; font-size: 14px; line-height: 1.6; }
+        .status.connected { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
 
         .service-cards-container {
             display: none;
-            margin: 40px 0;
+            margin: 20px 0;
             padding: 30px;
             background: #f8f9fa;
             border-radius: 15px;
         }
         .service-cards-container.show { display: block; }
-
+        .cards-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: #495057;
+            margin-bottom: 25px;
+        }
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -136,12 +109,7 @@
             max-width: 320px;
             transition: transform 0.3s, box-shadow 0.3s;
         }
-
-        .service-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(13, 183, 237, 0.5);
-        }
-
+        .service-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(13, 183, 237, 0.5); }
         .service-card::before {
             content: '';
             position: absolute;
@@ -151,152 +119,77 @@
             height: 200%;
             background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
         }
+        .service-card.failed { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
+        .service-card.success { background: linear-gradient(135deg, #28a745 0%, #218838 100%); }
 
-        .service-card.failed {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            box-shadow: 0 10px 30px rgba(220, 53, 69, 0.4);
-        }
+        .service-header { text-align: center; margin-bottom: 25px; position: relative; z-index: 1; }
+        .docker-icon { font-size: 80px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        .service-name { font-size: 22px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3); word-break: break-word; }
 
-        .service-card.success {
-            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
-            box-shadow: 0 10px 30px rgba(40, 167, 69, 0.4);
-        }
-
-        .service-header {
-            text-align: center;
-            margin-bottom: 25px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .docker-icon {
-            font-size: 80px;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-            margin-bottom: 15px;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .service-name {
-            font-size: 22px;
-            font-weight: 700;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            word-break: break-word;
-        }
-
-        .deployment-steps {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .step {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .step.pending {
-            border-color: rgba(255, 255, 255, 0.5);
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .step.success {
-            background: rgba(255, 255, 255, 0.35);
-            border-color: rgba(255, 255, 255, 0.8);
-        }
-
-        .step.failed {
-            background: rgba(0, 0, 0, 0.2);
-            border-color: rgba(255, 255, 255, 0.4);
-        }
-
-        .step-icon {
-            font-size: 28px;
-            min-width: 28px;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-        }
-
+        .deployment-steps { display: flex; flex-direction: column; gap: 15px; position: relative; z-index: 1; }
+        .step { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 12px; transition: all 0.3s; border: 2px solid rgba(255, 255, 255, 0.3); }
+        .step.pending { border-color: rgba(255, 255, 255, 0.5); background: rgba(255, 255, 255, 0.25); }
+        .step.success { background: rgba(255, 255, 255, 0.35); border-color: rgba(255, 255, 255, 0.8); }
+        .step.failed { background: rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.4); }
+        .step-icon { font-size: 28px; min-width: 28px; }
         .step-info { flex: 1; }
+        .step-name { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+        .step-status { font-size: 13px; opacity: 0.95; }
+        .step-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-left: 8px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .step-name {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 5px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
-
-        .step-status {
-            font-size: 13px;
-            opacity: 0.95;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-        }
-
-        .step-spinner {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 8px;
-            vertical-align: middle;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .log-container {
-            margin-top: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 16px;
-            display: none;
-        }
+        .log-container { margin-top: 20px; max-height: 400px; overflow-y: auto; background: #f8f9fa; border-radius: 10px; padding: 16px; display: none; border: 2px solid #e9ecef; }
         .log-container.show { display: block; }
-
-        .log-entry {
-            padding: 10px;
-            margin-bottom: 10px;
-            background: white;
-            border-radius: 6px;
-            font-size: 13px;
-            border-left: 3px solid #667eea;
-            line-height: 1.5;
-        }
-
+        .log-entry { padding: 10px; margin-bottom: 10px; background: white; border-radius: 6px; font-size: 13px; border-left: 3px solid #667eea; line-height: 1.5; }
         .log-entry.stage-start { border-left-color: #667eea; background: #e8eef9; font-weight: 600; }
         .log-entry.stage-success { border-left-color: #28a745; background: #d4edda; }
         .log-entry.stage-failed { border-left-color: #dc3545; background: #f8d7da; }
-        .log-entry.service-list { border-left-color: #17a2b8; background: #d1ecf1; white-space: pre-line; }
-        .log-entry.deployment-info { border-left-color: #ffc107; background: #fff3cd; }
         .log-entry.info { border-left-color: #17a2b8; background: #d1ecf1; }
         .log-entry.connected { border-left-color: #28a745; background: #d4edda; }
-
         .timestamp { color: #999; font-size: 11px; margin-right: 8px; }
 
-        .loading {
-            display: inline-block; width: 14px; height: 14px;
-            border: 2px solid #667eea; border-top-color: transparent;
-            border-radius: 50%; animation: spin 1s linear infinite;
-            margin-right: 8px; vertical-align: middle;
+        .result-container {
+            margin-top: 20px;
+            padding: 40px;
+            background: linear-gradient(135deg, #d4f4dd 0%, #c8e6c9 100%);
+            border: 3px solid #4caf50;
+            border-radius: 20px;
+            text-align: center;
+            animation: fadeIn 0.5s;
+            display: none;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
         }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .result-title { font-size: 32px; font-weight: 800; color: #1b5e20; margin-bottom: 15px; }
+        .result-desc { color: #2e7d32; margin-bottom: 30px; font-size: 16px; font-weight: 500; }
+        .service-links { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 25px; }
+        .service-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            color: #1b5e20;
+            text-decoration: none;
+            padding: 16px 28px;
+            border-radius: 15px;
+            border: 2px solid #81c784;
+            font-weight: 700;
+            font-size: 15px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .service-link-btn:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 8px 20px rgba(46, 125, 50, 0.3); background: #f1f8e9; border-color: #4caf50; }
+        .dashboard-btn {
+            background: linear-gradient(135deg, #424242 0%, #616161 100%);
+            margin-top: 15px;
+            width: auto;
+            display: inline-block;
+            padding: 16px 40px;
+            font-size: 16px;
+            border-radius: 12px;
+        }
+        .dashboard-btn:hover { background: linear-gradient(135deg, #212121 0%, #424242 100%); }
     </style>
 </head>
 <body>
@@ -308,6 +201,13 @@
             <div class="stage-description" id="stageDescription"></div>
         </div>
 
+        <div id="resultContainer" class="result-container">
+            <div class="result-title">🎉 배포가 성공적으로 완료되었습니다!</div>
+            <div class="result-desc">아래 버튼을 클릭하여 배포된 서비스에 접속하세요.</div>
+            <div id="serviceLinks" class="service-links"></div>
+            <button id="goToDashboardBtn" class="dashboard-btn" onclick="moveToDashboard()">📊 대시보드로 이동하기</button>
+        </div>
+
         <div class="input-group">
             <label for="repoUrl">GitHub Repository URL</label>
             <input type="text" id="repoUrl" placeholder="https://github.com/username/repo" value="https://github.com/example/test-repo">
@@ -317,7 +217,19 @@
         <button id="disconnectBtn" class="disconnect-btn" onclick="disconnectSSE()" style="display: none;">연결 종료</button>
 
         <div id="status"></div>
-        <div id="serviceCardsContainer" class="service-cards-container"><div class="cards-grid" id="cardsGrid"></div></div>
+        
+        <!-- ECR 푸시 단계 서비스 카드 -->
+        <div id="ecrCardsContainer" class="service-cards-container">
+            <div class="cards-title">🗂️ 빌드 및 ECR 푸시 진행상황</div>
+            <div class="cards-grid" id="ecrCardsGrid"></div>
+        </div>
+        
+        <!-- K8s 배포 단계 서비스 카드 -->
+        <div id="serviceCardsContainer" class="service-cards-container">
+            <div class="cards-title">☸️ EKS 배포 진행상황</div>
+            <div class="cards-grid" id="cardsGrid"></div>
+        </div>
+        
         <div id="logContainer" class="log-container"></div>
     </div>
 
@@ -325,8 +237,142 @@
         let eventSource = null;
         let currentStage = 0;
         let serviceCardsMap = {};
+        let ecrCardsMap = {};
         let discoveredServices = new Set();
         let deploymentFailed = false;
+        let pollingInterval = null;
+        let currentRepoUrl = '';
+        let serviceStatusMap = {};
+        let isProcessing = false;
+
+        function createECRServiceCard(serviceName) {
+            if (ecrCardsMap[serviceName]) return;
+            
+            const grid = document.getElementById('ecrCardsGrid');
+            const card = document.createElement('div');
+            card.className = 'service-card';
+            card.dataset.service = serviceName;
+            card.innerHTML = `
+                <div class="service-header">
+                    <div class="docker-icon">🐳</div>
+                    <div class="service-name">${serviceName}</div>
+                </div>
+                <div class="deployment-steps">
+                    <div class="step" data-step="SCAN">
+                        <div class="step-icon">🔍</div>
+                        <div class="step-info"><div class="step-name">Git Repository 스캔</div><div class="step-status">대기 중...</div></div>
+                    </div>
+                    <div class="step" data-step="BUILD">
+                        <div class="step-icon">🗂️</div>
+                        <div class="step-info"><div class="step-name">빌드 및 ECR 푸시</div><div class="step-status">대기 중...</div></div>
+                    </div>
+                    <div class="step" data-step="COMPLETE">
+                        <div class="step-icon">✅</div>
+                        <div class="step-info"><div class="step-name">ECR 푸시 완료</div><div class="step-status">대기 중...</div></div>
+                    </div>
+                </div>`;
+            grid.appendChild(card);
+            ecrCardsMap[serviceName] = card;
+            addLog(`🐳 서비스 추적 시작: ${serviceName}`, 'info');
+        }
+
+        function updateECRServiceCard(serviceName, status) {
+            const card = ecrCardsMap[serviceName];
+            if (!card) return;
+
+            const scanStep = card.querySelector('[data-step="SCAN"]');
+            const buildStep = card.querySelector('[data-step="BUILD"]');
+            const completeStep = card.querySelector('[data-step="COMPLETE"]');
+
+            if (status === 'PENDING') {
+                scanStep.classList.remove('success');
+                scanStep.classList.add('pending');
+                scanStep.querySelector('.step-status').innerHTML = 'Git Repository 스캔 중... <span class="step-spinner"></span>';
+                buildStep.classList.remove('pending', 'success');
+                buildStep.querySelector('.step-status').textContent = '대기 중...';
+                completeStep.classList.remove('pending', 'success');
+                completeStep.querySelector('.step-status').textContent = '대기 중...';
+            } else if (status === 'PUSHING') {
+                scanStep.classList.remove('pending');
+                scanStep.classList.add('success');
+                scanStep.querySelector('.step-status').textContent = '✅ 스캔 완료';
+                buildStep.classList.remove('success');
+                buildStep.classList.add('pending');
+                buildStep.querySelector('.step-status').innerHTML = '빌드 및 ECR 푸시 중... <span class="step-spinner"></span>';
+                completeStep.classList.remove('pending', 'success');
+                completeStep.querySelector('.step-status').textContent = '대기 중...';
+            } else if (status === 'PUSHED') {
+                scanStep.classList.remove('pending');
+                scanStep.classList.add('success');
+                scanStep.querySelector('.step-status').textContent = '✅ 스캔 완료';
+                buildStep.classList.remove('pending');
+                buildStep.classList.add('success');
+                buildStep.querySelector('.step-status').textContent = '✅ 빌드 및 푸시 완료';
+                completeStep.classList.remove('pending');
+                completeStep.classList.add('success');
+                completeStep.querySelector('.step-status').textContent = '✅ ECR 등록 완료';
+                card.classList.add('success');
+            }
+        }
+
+        async function pollBuildStatus(repoUrl) {
+            try {
+                const encodedUrl = encodeURIComponent(repoUrl);
+                const response = await fetch(`/api/repository?url=${encodedUrl}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const state = data.state;
+
+                    if (state === 'DEPLOYING' && data.repository && data.repository.services) {
+                        const services = data.repository.services;
+                        
+                        document.getElementById('ecrCardsContainer').classList.add('show');
+                        
+                        services.forEach(service => {
+                            const serviceName = service.serviceName;
+                            const serviceStatus = service.status;
+                            
+                            if (!ecrCardsMap[serviceName]) {
+                                createECRServiceCard(serviceName);
+                            }
+                            
+                            updateECRServiceCard(serviceName, serviceStatus);
+                            
+                            if (!serviceStatusMap[serviceName] || serviceStatusMap[serviceName] !== serviceStatus) {
+                                if (serviceStatus === 'PENDING') {
+                                    addLog(`🔍 ${serviceName}: Git Repository 스캔 중...`, 'info');
+                                } else if (serviceStatus === 'PUSHING') {
+                                    addLog(`🗂️ ${serviceName}: 빌드 및 ECR 푸시 중...`, 'info');
+                                } else if (serviceStatus === 'PUSHED') {
+                                    addLog(`✅ ${serviceName}: ECR 푸시 완료`, 'stage-success');
+                                }
+                                serviceStatusMap[serviceName] = serviceStatus;
+                            }
+                        });
+                        
+                        const allPushed = services.every(s => s.status === 'PUSHED');
+                        if (allPushed) {
+                            addLog('📦 모든 서비스 ECR 푸시 완료', 'stage-success');
+                            stopPolling();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('폴링 에러:', error);
+            }
+        }
+
+        function startPolling(repoUrl) {
+            currentRepoUrl = repoUrl;
+            serviceStatusMap = {};
+            addLog('🔍 MSA 서비스 스캔 및 분석 시작', 'info');
+            pollingInterval = setInterval(() => { pollBuildStatus(repoUrl); }, 3000);
+        }
+
+        function stopPolling() {
+            if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null; }
+        }
 
         async function sendRepositoryRequest(repoUrl) {
             try {
@@ -336,63 +382,82 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ repositoryUrl: repoUrl })
                 });
-                if (!response.ok) {
+                
+                if (response.ok) {
+                    startPolling(repoUrl);
+                } else {
                     const errorText = await response.text();
                     addLog(`❌ 분석 요청 실패: ${response.status} - ${errorText}`, 'stage-failed');
                     showStatus('Repository 요청 실패', 'error');
+                    stopPolling();
                 }
             } catch (error) {
                 console.error('Fetch Error:', error);
                 addLog(`❌ 통신 오류: ${error.message}`, 'stage-failed');
+                stopPolling();
             }
         }
 
         async function handleStartButton() {
+            if (isProcessing) return;
+
             const repoUrl = document.getElementById('repoUrl').value.trim();
-            if (!repoUrl) {
-                showStatus('Repository URL을 입력해주세요.', 'error');
-                return;
-            }
+            const connectBtn = document.getElementById('connectBtn');
+
+            if (!repoUrl) { showStatus('Repository URL을 입력해주세요.', 'error'); return; }
+
+            isProcessing = true;
+            connectBtn.disabled = true;
+            document.getElementById('resultContainer').style.display = 'none';
 
             try {
                 const encodedUrl = encodeURIComponent(repoUrl);
-                // 변경된 부분: /api/repository?url=... 호출하여 상태 객체 확인
                 const response = await fetch(`/api/repository?url=${encodedUrl}`);
 
                 if (response.ok) {
                     const data = await response.json();
-                    // GetRepositoryResponseDto의 state 필드 확인
-                    // Enum: NO_EXIST, DEPLOYING, DEPLOYED
-                    if (data.state === 'DEPLOYING') {
-                        window.location.href = `/dashboard.html?repo=${encodedUrl}`;
-                        return;
+                    if (data.state !== 'NO_EXIST') {
+                        if(confirm("이미 배포된 프로젝트입니다. 대시보드로 이동하시겠습니까?")) {
+                            moveToDashboard();
+                            return;
+                        } else {
+                            isProcessing = false;
+                            connectBtn.disabled = false;
+                            return;
+                        }
                     }
-                    // DEPLOYING 상태이거나 NO_EXIST 상태이면 배포/모니터링 진행
                 }
-            } catch (e) {
-                console.error("배포 상태 확인 실패, 기존 흐름으로 진행합니다.", e);
-            }
-            // 상태가 DEPLOYED가 아니거나 확인에 실패하면 기존대로 SSE 연결 시작
+            } catch (e) { console.error("상태 확인 실패, 진행", e); }
+
             connectSSE();
+        }
+
+        function moveToDashboard() {
+            const repoUrl = document.getElementById('repoUrl').value.trim();
+            if (repoUrl) {
+                const encodedUrl = encodeURIComponent(repoUrl);
+                window.location.href = `/dashboard.html?repo=${encodedUrl}`;
+            } else { alert("Repository URL이 없습니다."); }
         }
 
         function connectSSE() {
             const repoUrl = document.getElementById('repoUrl').value.trim();
-
-            if (!repoUrl) {
-                showStatus('Repository URL을 입력해주세요.', 'error');
-                return;
-            }
+            if (!repoUrl) { showStatus('Repository URL을 입력해주세요.', 'error'); return; }
 
             if (eventSource) eventSource.close();
 
             deploymentFailed = false;
             serviceCardsMap = {};
+            ecrCardsMap = {};
             discoveredServices.clear();
 
             document.getElementById('connectBtn').disabled = true;
             document.getElementById('disconnectBtn').style.display = 'block';
             document.getElementById('stageIndicator').classList.add('show');
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('ecrCardsContainer').classList.remove('show');
+            document.getElementById('ecrCardsGrid').innerHTML = '';
+
             updateStage(0, '연결 중...', '');
             document.getElementById('logContainer').classList.add('show');
             clearLogs();
@@ -415,75 +480,83 @@
                 addLog(e.data, 'stage-start');
             });
 
-            eventSource.addEventListener('stage-1-success', (e) => {
-                addLog(e.data, 'stage-success');
-                const match = e.data.match(/(\d+)개 서비스/);
-                if (match) {
-                    const serviceCount = parseInt(match[1]);
-                    initializeServiceCards(serviceCount);
-                }
-            });
+            eventSource.addEventListener('stage-1-success', (e) => { addLog(e.data, 'stage-success'); });
 
             eventSource.addEventListener('stage-1-failed', (e) => {
                 updateStage(1, '1단계: 실패', '');
                 addLog(e.data, 'stage-failed');
                 handleDeploymentFailure('1단계에서 실패');
+                stopPolling();
             });
 
-            // stage-2-start 이벤트 리스너
             eventSource.addEventListener('stage-2-start', (e) => {
                 updateStage(2, '2단계: EKS 배포', 'Kubernetes 클러스터에 배포 중...');
-
+                
+                setTimeout(() => {
+                    document.getElementById('ecrCardsContainer').classList.remove('show');
+                }, 1000);
+                
                 try {
-                    // 1. SSE 데이터 파싱 (JSON 객체 수신)
                     const data = JSON.parse(e.data);
-                    const message = data.message; // 화면 로그용 메시지
-                    const deploymentPayload = data.payload; // /api/deploy 전송용 페이로드
+                    addLog(data.message, 'stage-start');
+                    
+                    if (data.payload && data.payload.services) {
+                        initializeServiceCards(data.payload.services.length);
+                        data.payload.services.forEach(service => { createServiceCard(service.serviceName); });
+                    }
 
-                    addLog(message, 'stage-start');
+                    setTimeout(() => {
+                        fetch('/api/api/deploy', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data.payload)
+                        }).catch(error => console.error('Internal Deployment Trigger Failed:', error));
+                    }, 2000);
 
-                    // 2. 백엔드로 배포 요청 (동적 데이터 사용)
-                    fetch('/api/api/deploy', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(deploymentPayload) // DB에서 조회한 실제 데이터 전송
-                    }).catch(error => {
-                        console.error('Internal Deployment Trigger Failed:', error);
-                    });
-
-                } catch (err) {
-                    console.error("Failed to parse stage-2-start payload", err);
-                    // 하위 호환성 (만약 단순히 문자열만 온 경우)
-                    addLog(e.data, 'stage-start');
-                }
+                } catch (err) { addLog(e.data, 'stage-start'); }
             });
-
-            eventSource.addEventListener('service-list', (e) => addLog(e.data, 'service-list'));
-            eventSource.addEventListener('deployment-info', (e) => addLog(e.data, 'deployment-info'));
-            eventSource.addEventListener('deployment-log', (e) => addLog('📋 ' + e.data, 'info'));
 
             eventSource.addEventListener('service-update', (e) => {
                 try {
                     const data = JSON.parse(e.data);
                     const { serviceName, step, status, message } = data;
-
                     if (!serviceCardsMap[serviceName]) createServiceCard(serviceName);
                     updateServiceStep(serviceName, step, status, message);
-
                     if (status === 'FAILED') handleServiceFailure(serviceName, step, message);
-                } catch (error) {
-                    console.error('service-update 파싱 오류:', error);
-                }
+                } catch (error) { console.error('service-update 파싱 오류:', error); }
             });
 
             eventSource.addEventListener('all-complete', (e) => {
-                updateStage(99, '✅ 배포 완료', '모든 단계가 성공적으로 완료되었습니다');
-                showStatus('🎉 배포 성공: ' + e.data, 'connected');
-                addLog('✅ 배포 성공: ' + e.data, 'stage-success');
-                Object.keys(serviceCardsMap).forEach(serviceName => {
-                    serviceCardsMap[serviceName].classList.add('success');
-                });
-                setTimeout(() => disconnectSSE(), 3000);
+                try {
+                    const data = JSON.parse(e.data);
+                    const message = data.message;
+                    const ingressUrl = data.address;
+
+                    updateStage(99, '✅ 배포 완료', '모든 단계가 성공적으로 완료되었습니다');
+                    showStatus('🎉 ' + message, 'connected');
+                    addLog('✅ 배포 완료. 접속 주소: ' + ingressUrl, 'stage-success');
+
+                    Object.keys(serviceCardsMap).forEach(serviceName => { serviceCardsMap[serviceName].classList.add('success'); });
+
+                    const linksContainer = document.getElementById('serviceLinks');
+                    linksContainer.innerHTML = '';
+
+                    discoveredServices.forEach(serviceName => {
+                        const serviceLink = `${ingressUrl}/${serviceName}`;
+                        const linkBtn = document.createElement('a');
+                        linkBtn.href = serviceLink;
+                        linkBtn.target = "_blank";
+                        linkBtn.className = "service-link-btn";
+                        linkBtn.innerHTML = `🔗 ${serviceName} 접속`;
+                        linksContainer.appendChild(linkBtn);
+                    });
+
+                    document.getElementById('resultContainer').style.display = 'block';
+                    setTimeout(() => disconnectSSE(), 3000);
+                } catch (err) {
+                    console.error("all-complete parse error:", err);
+                    showStatus('🎉 배포 성공: ' + e.data, 'connected');
+                }
             });
 
             eventSource.addEventListener('deployment-failed', (e) => {
@@ -491,6 +564,7 @@
                 showStatus('❌ 배포 실패: ' + e.data, 'error');
                 addLog('❌ 배포 실패: ' + e.data, 'stage-failed');
                 handleDeploymentFailure(e.data);
+                stopPolling();
             });
 
             eventSource.onerror = (error) => console.error('SSE Error:', error);
@@ -498,9 +572,11 @@
 
         function disconnectSSE() {
             if (eventSource) { eventSource.close(); eventSource = null; }
+            stopPolling();
             document.getElementById('connectBtn').disabled = false;
             document.getElementById('disconnectBtn').style.display = 'none';
             document.getElementById('stageIndicator').classList.remove('show');
+            isProcessing = false;
             if (!deploymentFailed) showStatus('연결이 종료되었습니다.', 'info');
         }
 
@@ -565,7 +641,7 @@
                 </div>`;
             grid.appendChild(card);
             serviceCardsMap[serviceName] = card;
-            addLog(`🐳 서비스 추적 시작: ${serviceName}`, 'info');
+            addLog(`🐳 K8s 배포 추적 시작: ${serviceName}`, 'info');
         }
 
         function updateServiceStep(serviceName, step, status, message) {
@@ -597,6 +673,7 @@
         function handleDeploymentFailure(reason) {
             if (deploymentFailed) return;
             deploymentFailed = true;
+            stopPolling();
             updateStage(99, '❌ 배포 실패', '배포가 중단되었습니다');
             showStatus('❌ 배포 실패: ' + reason, 'error');
             addLog('❌ 배포 실패로 인한 연결 종료: ' + reason, 'stage-failed');
@@ -604,10 +681,14 @@
                 if (eventSource) { eventSource.close(); eventSource = null; }
                 document.getElementById('connectBtn').disabled = false;
                 document.getElementById('disconnectBtn').style.display = 'none';
+                isProcessing = false;
             }, 1000);
         }
 
-        window.addEventListener('beforeunload', () => { if (eventSource) eventSource.close(); });
+        window.addEventListener('beforeunload', () => { 
+            if (eventSource) eventSource.close(); 
+            stopPolling();
+        });
     </script>
 </body>
 </html>
