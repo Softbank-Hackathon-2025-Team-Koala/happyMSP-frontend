@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>실시간 서비스 대시보드</title>
+    <style>
+        /* [기존 스타일 유지] */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .dashboard-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid #eee;
+        }
+        .header-title h1 { font-size: 24px; font-weight: 800; color: #2d3436; margin-bottom: 5px; }
+        .header-title p { font-size: 14px; color: #636e72; }
+        .live-badge {
+            background: #e6f7ed; color: #00b894; padding: 8px 16px;
+            border-radius: 30px; font-size: 13px; font-weight: 700;
+            display: flex; align-items: center; gap: 8px; border: 1px solid #ccf0db;
+        }
+        .live-dot {
+            width: 8px; height: 8px; background: #00b894; border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(0, 184, 148, 0.7); animation: pulse-green 2s infinite;
+        }
+
+        /* 그리드 레이아웃 수정: 카드가 커질 수 있으므로 minmax 조정 */
+        .metric-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;
+        }
+        .metric-card {
+            background: #fff; border: 1px solid #dfe6e9; border-radius: 16px;
+            padding: 20px; transition: all 0.3s ease; position: relative; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        .metric-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: #74b9ff; }
+
+        /* 서비스 헤더 */
+        .mc-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 15px; border-bottom: 2px solid #f1f2f6; margin-bottom: 15px;
+        }
+        .mc-title { font-size: 18px; font-weight: 700; color: #2d3436; display: flex; align-items: center; gap: 8px; }
+        .service-icon { font-size: 20px; }
+
+        /* 서비스 레벨 컨트롤 (카드 상단) */
+        .service-controls {
+            display: flex; gap: 5px;
+        }
+        .btn-svc {
+            border: none; background: #f1f2f6; border-radius: 6px; padding: 5px 10px;
+            cursor: pointer; font-size: 14px; transition: 0.2s;
+        }
+        .btn-svc:hover { background: #dfe6e9; transform: scale(1.05); }
+
+        /* --- [NEW] 파드 리스트 스타일 --- */
+        .pod-list-container {
+            display: flex; flex-direction: column; gap: 10px;
+        }
+
+        .pod-item {
+            background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 10px;
+            padding: 12px; font-size: 13px;
+        }
+        .pod-item:hover { border-color: #b2bec3; background: #fff; }
+
+        .pod-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+        }
+        .pod-id {
+            font-weight: 700; color: #2d3436; font-family: monospace; font-size: 14px;
+        }
+        .mc-status {
+            font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .mc-status.running { background: #e6f7ed; color: #00b894; }
+        .mc-status.pending { background: #fff8e1; color: #ffa502; }
+        .mc-status.error { background: #ffebee; color: #ff7675; }
+
+        .pod-metrics {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;
+            color: #636e72; margin-bottom: 10px;
+        }
+        .pod-metrics span { font-weight: 600; color: #2d3436; }
+
+        .pod-actions {
+            display: flex; gap: 5px;
+        }
+        .btn-pod {
+            flex: 1; padding: 6px; border: none; border-radius: 6px;
+            font-size: 11px; font-weight: 600; cursor: pointer; color: white;
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+        }
+        .btn-pod:hover { opacity: 0.9; }
+        .btn-log { background-color: #636e72; }
+        .btn-kill { background-color: #ff7675; }
+
+        /* 기타 */
+        #loadingMessage { grid-column: 1 / -1; text-align: center; padding: 40px; color: #636e72; background: #f8f9fa; border-radius: 12px; }
+        .back-btn {
+            display: inline-block; margin-top: 40px; padding: 12px 24px;
+            background: #2d3436; color: white; text-decoration: none;
+            border-radius: 8px; font-weight: 600; transition: background 0.2s;
+            cursor: pointer; border: none;
+        }
+        .back-btn:hover { background: #000; }
+
+        /* 로그 모달 */
+        #logModal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 1000;
+        }
+        #logContent {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 80%; max-width: 800px; height: 70%;
+            background: #2d3436; color: #f1f2f6;
+            border-radius: 12px; padding: 20px; display: flex; flex-direction: column;
+        }
+        #logText {
+            flex: 1; overflow-y: auto; white-space: pre-wrap; font-family: monospace;
+            font-size: 13px; line-height: 1.5; padding: 10px; background: #000; border-radius: 8px;
+        }
+        .close-modal { align-self: flex-end; color: white; cursor: pointer; margin-bottom: 10px; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div class="header-title">
+                <h1>📊 Live Ops Dashboard</h1>
+                <p>실시간 모니터링 및 서비스 제어</p>
+            </div>
+            <div class="live-badge">
+                <div class="live-dot"></div>
+                Monitoring Active
+            </div>
+        </header>
+
+        <div class="metric-grid" id="metricGrid">
+            <div id="loadingMessage">
+                데이터 수신 대기 중...<br>
+                <small>(잠시 후 데이터가 표시됩니다)</small>
+            </div>
+        </div>
+
+        <button class="back-btn" onclick="location.href='/'">← 메인으로 돌아가기</button>
+    </div>
+
+    <div id="logModal">
+        <div id="logContent">
+            <span class="close-modal" onclick="closeLogModal()">× 닫기</span>
+            <h3 id="logTitle" style="margin-bottom: 10px;">Pod Logs</h3>
+            <div id="logText">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        let eventSource = null;
+        const metricCards = {};
+        let currentRepoUrl = "";
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const repoUrl = urlParams.get('repo');
+            currentRepoUrl = repoUrl;
+
+            if (!repoUrl) {
+                alert("Repository 정보가 없습니다.");
+                window.location.href = "/";
+                return;
+            }
+
+            startDashboard(repoUrl);
+        };
+
+        function startDashboard(repoUrl) {
+            const sseUrl = `/api/metrics/dashboard?repo_url=${encodeURIComponent(repoUrl)}`;
+            console.log(`Connecting: ${sseUrl}`);
+            eventSource = new EventSource(sseUrl);
+
+            eventSource.addEventListener('dashboard-update', (e) => {
+                document.getElementById('loadingMessage').style.display = 'none';
+                try {
+                    updateUI(JSON.parse(e.data));
+                } catch (err) { console.error(err); }
+            });
+        }
+
+        function updateUI(metricsList) {
+            const grid = document.getElementById('metricGrid');
+
+            // 1. 데이터를 서비스별로 그룹화
+            // { "was": [pod1, pod2], "frontend": [pod3] }
+            const grouped = {};
+            metricsList.forEach(m => {
+                if (!grouped[m.serviceName]) grouped[m.serviceName] = [];
+                grouped[m.serviceName].push(m);
+            });
+
+            // 2. 서비스 단위로 카드 생성 및 업데이트
+            Object.keys(grouped).forEach(serviceName => {
+                const pods = grouped[serviceName];
+                let serviceCard = metricCards[serviceName];
+
+                // 2-1. 서비스 카드가 없으면 생성 (프레임만)
+                if (!serviceCard) {
+                    serviceCard = document.createElement('div');
+                    serviceCard.className = 'metric-card';
+                    serviceCard.innerHTML = `
+                        <div class="mc-header">
+                            <div class="mc-title">
+                                <span class="service-icon">📦</span>
+                                <span>${serviceName}</span>
+                                <span style="font-size:12px; color:#999; margin-left:5px;">(${pods.length} pods)</span>
+                            </div>
+                            <div class="service-controls">
+                                <button class="btn-svc" onclick="scaleService('${serviceName}')" title="Scale (Pod 개수 조절)">⚖️</button>
+                                <button class="btn-svc" onclick="restartService('${serviceName}')" title="Restart App (전체 재시작)">🚀</button>
+                            </div>
+                        </div>
+                        <div class="pod-list-container"></div>
+                    `;
+                    grid.appendChild(serviceCard);
+                    metricCards[serviceName] = serviceCard;
+                }
+
+                // 2-2. 파드 리스트 업데이트 (기존 내용을 지우고 새로 그림)
+                // 파드 수가 동적으로 변하므로 매번 다시 그리는 방식이 안전함
+                const podContainer = serviceCard.querySelector('.pod-list-container');
+
+                // Pod 개수 표시 업데이트 (헤더)
+                const countLabel = serviceCard.querySelector('.mc-title span:last-child');
+                if(countLabel) countLabel.textContent = `(${pods.length} pods)`;
+
+                podContainer.innerHTML = ''; // 초기화
+
+                pods.forEach(pod => {
+                    const podEl = document.createElement('div');
+                    podEl.className = 'pod-item';
+
+                    // 상태별 클래스
+                    const statusClass = pod.status === 'Running' ? 'running' :
+                                      (pod.status === 'Pending' ? 'pending' : 'error');
+
+                    // Pod 이름 뒷부분만 짧게 표시 (예: project-1-was-abcde -> ...abcde)
+                    const shortPodName = pod.podName.split('-').slice(-2).join('-');
+
+                    podEl.innerHTML = `
+                        <div class="pod-header">
+                            <span class="pod-id" title="${pod.podName}">...${shortPodName}</span>
+                            <span class="mc-status ${statusClass}">${pod.status}</span>
+                        </div>
+                        <div class="pod-metrics">
+                            <div>CPU: <span>${pod.cpuUsage}</span></div>
+                            <div>MEM: <span>${pod.memoryUsage}</span></div>
+                            <div>Age: <span>${pod.age}</span></div>
+                        </div>
+                        <div class="pod-actions">
+                            <button class="btn-pod btn-log" onclick="viewLogs('${pod.podName}')">📜 Log</button>
+                            <button class="btn-pod btn-kill" onclick="restartPod('${pod.podName}')">🔄 Kill</button>
+                        </div>
+                    `;
+                    podContainer.appendChild(podEl);
+                });
+            });
+        }
+
+        // === 관리 기능 함수들 ===
+
+        function viewLogs(podName) {
+            document.getElementById('logModal').style.display = 'block';
+            document.getElementById('logTitle').textContent = `Logs: ${podName}`;
+            document.getElementById('logText').textContent = "Loading logs...";
+
+            fetch(`/api/management/logs?pod=${podName}`)
+                .then(res => res.text())
+                .then(text => {
+                    document.getElementById('logText').textContent = text;
+                })
+                .catch(err => {
+                    document.getElementById('logText').textContent = "Failed to load logs: " + err;
+                });
+        }
+
+        function closeLogModal() {
+            document.getElementById('logModal').style.display = 'none';
+        }
+
+        function restartPod(podName) {
+            if(!confirm(`⚠️ 경고: 파드(${podName})를 강제 종료하시겠습니까?\nKubernetes가 자동으로 새 파드를 생성합니다.`)) return;
+            postAction('/api/management/pod/restart', { podName: podName });
+        }
+
+        function restartService(serviceName) {
+            if(!confirm(`⚠️ 경고: '${serviceName}' 서비스를 롤아웃 재시작합니다.\n모든 파드가 순차적으로 교체됩니다.`)) return;
+            postAction('/api/management/service/restart', {
+                repoUrl: currentRepoUrl,
+                serviceName: serviceName
+            });
+        }
+
+        function scaleService(serviceName) {
+            const count = prompt(`'${serviceName}' 서비스의 파드 개수를 입력하세요 (1~10):`, "1");
+            if(count === null) return;
+
+            const replicas = parseInt(count);
+            if(isNaN(replicas) || replicas < 0 || replicas > 10) {
+                alert("잘못된 숫자입니다. (0~10 사이)");
+                return;
+            }
+
+            postAction('/api/management/service/scale', {
+                repoUrl: currentRepoUrl,
+                serviceName: serviceName,
+                replicas: replicas
+            });
+        }
+
+        function postAction(url, data) {
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => {
+                if(res.ok) alert("✅ 명령이 전송되었습니다. 잠시 후 반영됩니다.");
+                else alert("❌ 명령 실패");
+            })
+            .catch(err => alert("통신 오류: " + err));
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (eventSource) eventSource.close();
+        });
+    </script>
+</body>
+</html>
