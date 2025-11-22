@@ -367,7 +367,7 @@
             currentRepoUrl = repoUrl;
             serviceStatusMap = {};
             addLog('🔍 MSA 서비스 스캔 및 분석 시작', 'info');
-            pollingInterval = setInterval(() => { pollBuildStatus(repoUrl); }, 1500);
+            pollingInterval = setInterval(() => { pollBuildStatus(repoUrl); }, 3000);
         }
 
         function stopPolling() {
