@@ -490,30 +490,44 @@
             });
 
             eventSource.addEventListener('stage-2-start', (e) => {
-                updateStage(2, '2단계: EKS 배포', 'Kubernetes 클러스터에 배포 중...');
-                
-                setTimeout(() => {
-                    document.getElementById('ecrCardsContainer').classList.remove('show');
-                }, 1000);
-                
+                // 1. 로그 및 데이터 파싱은 즉시 실행
+                let data = null;
                 try {
-                    const data = JSON.parse(e.data);
+                    data = JSON.parse(e.data);
                     addLog(data.message, 'stage-start');
-                    
-                    if (data.payload && data.payload.services) {
-                        initializeServiceCards(data.payload.services.length);
-                        data.payload.services.forEach(service => { createServiceCard(service.serviceName); });
-                    }
+                } catch (err) {
+                    addLog(e.data, 'stage-start');
+                    return; // 파싱 실패 시 중단
+                }
 
-                    setTimeout(() => {
+                // 2. 실제 배포 API 요청 (백그라운드 로직은 기존 타이밍 유지)
+                setTimeout(() => {
+                    if (data && data.payload) {
                         fetch('/api/api/deploy', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(data.payload)
                         }).catch(error => console.error('Internal Deployment Trigger Failed:', error));
-                    }, 2000);
+                    }
+                }, 2000);
 
-                } catch (err) { addLog(e.data, 'stage-start'); }
+                // 3. ★ UI 화면 전환을 3초 뒤에 일괄 처리 (동시 교체) ★
+                setTimeout(() => {
+                    // A. 단계 텍스트 업데이트
+                    updateStage(2, '2단계: EKS 배포', 'Kubernetes 클러스터에 배포 중...');
+
+                    // B. ECR 카드 컨테이너 숨기기 (기존 UI 끄기)
+                    document.getElementById('ecrCardsContainer').classList.remove('show');
+
+                    // C. EKS 서비스 카드 생성 및 컨테이너 보이기 (새 UI 켜기)
+                    // initializeServiceCards 함수가 .show 클래스를 추가하므로 여기서 실행
+                    if (data && data.payload && data.payload.services) {
+                        initializeServiceCards(data.payload.services.length);
+                        data.payload.services.forEach(service => { 
+                            createServiceCard(service.serviceName); 
+                        });
+                    }
+                }, 3000); // 3초 딜레이
             });
 
             eventSource.addEventListener('service-update', (e) => {

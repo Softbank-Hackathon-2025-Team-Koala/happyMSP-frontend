@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>실시간 서비스 대시보드</title>
     <style>
-        /* [기존 스타일 유지] */
+        /* === Global & Reset === */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -14,6 +14,8 @@
             padding: 20px;
             color: #333;
         }
+
+        /* === Layout === */
         .container {
             background: white;
             border-radius: 20px;
@@ -23,6 +25,8 @@
             margin: 0 auto;
             width: 100%;
         }
+
+        /* === Header === */
         .dashboard-header {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid #eee;
@@ -39,10 +43,12 @@
             box-shadow: 0 0 0 0 rgba(0, 184, 148, 0.7); animation: pulse-green 2s infinite;
         }
 
-        /* 그리드 레이아웃 수정: 카드가 커질 수 있으므로 minmax 조정 */
+        /* === Grid System === */
         .metric-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;
         }
+
+        /* === Service Card === */
         .metric-card {
             background: #fff; border: 1px solid #dfe6e9; border-radius: 16px;
             padding: 20px; transition: all 0.3s ease; position: relative; overflow: hidden;
@@ -50,28 +56,52 @@
         }
         .metric-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: #74b9ff; }
 
-        /* 서비스 헤더 */
+        /* === Card Header === */
         .mc-header {
             display: flex; justify-content: space-between; align-items: center;
             padding-bottom: 15px; border-bottom: 2px solid #f1f2f6; margin-bottom: 15px;
         }
         .mc-title { font-size: 18px; font-weight: 700; color: #2d3436; display: flex; align-items: center; gap: 8px; }
         .service-icon { font-size: 20px; }
+        .pod-count { font-size: 12px; color: #999; margin-left: 5px; }
 
-        /* 서비스 레벨 컨트롤 (카드 상단) */
-        .service-controls {
-            display: flex; gap: 5px;
-        }
+        /* === Service Controls === */
+        .service-controls { display: flex; gap: 5px; }
+        
         .btn-svc {
             border: none; background: #f1f2f6; border-radius: 6px; padding: 5px 10px;
             cursor: pointer; font-size: 14px; transition: 0.2s;
         }
         .btn-svc:hover { background: #dfe6e9; transform: scale(1.05); }
 
-        /* --- [NEW] 파드 리스트 스타일 --- */
-        .pod-list-container {
-            display: flex; flex-direction: column; gap: 10px;
+        /* [Minimal-White-React Style Button] for Ingress Link */
+        .btn-link {
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #475569;
+            border-radius: 6px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            text-decoration: none;
         }
+        .btn-link:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #0f172a;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .btn-link:active { transform: translateY(0); }
+
+        /* === Pod List === */
+        .pod-list-container { display: flex; flex-direction: column; gap: 10px; }
 
         .pod-item {
             background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 10px;
@@ -79,12 +109,9 @@
         }
         .pod-item:hover { border-color: #b2bec3; background: #fff; }
 
-        .pod-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
-        }
-        .pod-id {
-            font-weight: 700; color: #2d3436; font-family: monospace; font-size: 14px;
-        }
+        .pod-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .pod-id { font-weight: 700; color: #2d3436; font-family: monospace; font-size: 14px; }
+        
         .mc-status {
             font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
             text-transform: uppercase;
@@ -99,9 +126,7 @@
         }
         .pod-metrics span { font-weight: 600; color: #2d3436; }
 
-        .pod-actions {
-            display: flex; gap: 5px;
-        }
+        .pod-actions { display: flex; gap: 5px; }
         .btn-pod {
             flex: 1; padding: 6px; border: none; border-radius: 6px;
             font-size: 11px; font-weight: 600; cursor: pointer; color: white;
@@ -111,7 +136,7 @@
         .btn-log { background-color: #636e72; }
         .btn-kill { background-color: #ff7675; }
 
-        /* 기타 */
+        /* === Utility & Modal === */
         #loadingMessage { grid-column: 1 / -1; text-align: center; padding: 40px; color: #636e72; background: #f8f9fa; border-radius: 12px; }
         .back-btn {
             display: inline-block; margin-top: 40px; padding: 12px 24px;
@@ -121,7 +146,6 @@
         }
         .back-btn:hover { background: #000; }
 
-        /* 로그 모달 */
         #logModal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 1000;
@@ -135,8 +159,16 @@
         #logText {
             flex: 1; overflow-y: auto; white-space: pre-wrap; font-family: monospace;
             font-size: 13px; line-height: 1.5; padding: 10px; background: #000; border-radius: 8px;
+            scroll-behavior: smooth; /* 부드러운 스크롤 */
         }
         .close-modal { align-self: flex-end; color: white; cursor: pointer; margin-bottom: 10px; font-size: 20px; }
+
+        /* Animation */
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 184, 148, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 184, 148, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 184, 148, 0); }
+        }
     </style>
 </head>
 <body>
@@ -166,14 +198,16 @@
         <div id="logContent">
             <span class="close-modal" onclick="closeLogModal()">× 닫기</span>
             <h3 id="logTitle" style="margin-bottom: 10px;">Pod Logs</h3>
-            <div id="logText">Loading...</div>
+            <div id="logText">Connecting to log stream...</div>
         </div>
     </div>
 
     <script>
-        let eventSource = null;
+        let eventSource = null;       // 대시보드 데이터용 SSE
+        let logEventSource = null;    // 로그 스트리밍용 SSE (별도 관리)
         const metricCards = {};
         let currentRepoUrl = "";
+        let globalIngressUrl = null;  // 수신된 Ingress URL 저장
 
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -194,6 +228,16 @@
             console.log(`Connecting: ${sseUrl}`);
             eventSource = new EventSource(sseUrl);
 
+            // [기능 1] Ingress URL 수신 리스너
+            eventSource.addEventListener('ingress-info', (e) => {
+                if (e.data) {
+                    globalIngressUrl = e.data.replace(/"/g, ''); // 따옴표 제거
+                    console.log("Ingress URL Received:", globalIngressUrl);
+                    // UI 업데이트는 다음 대시보드 업데이트 주기 또는 즉시 반영 가능
+                }
+            });
+
+            // 대시보드 상태 업데이트 리스너
             eventSource.addEventListener('dashboard-update', (e) => {
                 document.getElementById('loadingMessage').style.display = 'none';
                 try {
@@ -206,7 +250,6 @@
             const grid = document.getElementById('metricGrid');
 
             // 1. 데이터를 서비스별로 그룹화
-            // { "was": [pod1, pod2], "frontend": [pod3] }
             const grouped = {};
             metricsList.forEach(m => {
                 if (!grouped[m.serviceName]) grouped[m.serviceName] = [];
@@ -218,19 +261,31 @@
                 const pods = grouped[serviceName];
                 let serviceCard = metricCards[serviceName];
 
-                // 2-1. 서비스 카드가 없으면 생성 (프레임만)
+                // [기능 1] 접속 버튼 HTML 생성
+                let linkBtnHtml = '';
+                if (globalIngressUrl) {
+                    const targetUrl = `${globalIngressUrl}/${serviceName}`; // Ingress 경로 규칙 적용
+                    linkBtnHtml = `
+                        <button class="btn-link" onclick="window.open('${targetUrl}', '_blank')" title="새 탭에서 열기">
+                            🌐 접속
+                        </button>
+                    `;
+                }
+
+                // 2-1. 서비스 카드가 없으면 생성 (초기화)
                 if (!serviceCard) {
                     serviceCard = document.createElement('div');
                     serviceCard.className = 'metric-card';
+                    
                     serviceCard.innerHTML = `
                         <div class="mc-header">
                             <div class="mc-title">
                                 <span class="service-icon">📦</span>
                                 <span>${serviceName}</span>
-                                <span style="font-size:12px; color:#999; margin-left:5px;">(${pods.length} pods)</span>
+                                <span class="pod-count">(${pods.length} pods)</span>
                             </div>
                             <div class="service-controls">
-                                <button class="btn-svc" onclick="scaleService('${serviceName}')" title="Scale (Pod 개수 조절)">⚖️</button>
+                                ${linkBtnHtml} <button class="btn-svc" onclick="scaleService('${serviceName}')" title="Scale (Pod 개수 조절)">⚖️</button>
                                 <button class="btn-svc" onclick="restartService('${serviceName}')" title="Restart App (전체 재시작)">🚀</button>
                             </div>
                         </div>
@@ -238,27 +293,31 @@
                     `;
                     grid.appendChild(serviceCard);
                     metricCards[serviceName] = serviceCard;
+                } else {
+                    // 2-2. 카드가 이미 존재할 때, Ingress 버튼이 뒤늦게 활성화될 수 있으므로 체크 후 추가
+                    const controls = serviceCard.querySelector('.service-controls');
+                    if (globalIngressUrl && !controls.querySelector('.btn-link')) {
+                         const tempDiv = document.createElement('div');
+                         const targetUrl = `${globalIngressUrl}/${serviceName}`;
+                         tempDiv.innerHTML = `<button class="btn-link" onclick="window.open('${targetUrl}', '_blank')" title="새 탭에서 열기">🌐 접속</button>`;
+                         // 버튼을 맨 앞에 추가
+                         controls.insertBefore(tempDiv.firstChild, controls.firstChild);
+                    }
                 }
 
-                // 2-2. 파드 리스트 업데이트 (기존 내용을 지우고 새로 그림)
-                // 파드 수가 동적으로 변하므로 매번 다시 그리는 방식이 안전함
+                // 2-3. 파드 리스트 업데이트
                 const podContainer = serviceCard.querySelector('.pod-list-container');
-
-                // Pod 개수 표시 업데이트 (헤더)
-                const countLabel = serviceCard.querySelector('.mc-title span:last-child');
+                const countLabel = serviceCard.querySelector('.pod-count');
                 if(countLabel) countLabel.textContent = `(${pods.length} pods)`;
 
-                podContainer.innerHTML = ''; // 초기화
+                podContainer.innerHTML = ''; // 기존 리스트 초기화
 
                 pods.forEach(pod => {
                     const podEl = document.createElement('div');
                     podEl.className = 'pod-item';
 
-                    // 상태별 클래스
                     const statusClass = pod.status === 'Running' ? 'running' :
                                       (pod.status === 'Pending' ? 'pending' : 'error');
-
-                    // Pod 이름 뒷부분만 짧게 표시 (예: project-1-was-abcde -> ...abcde)
                     const shortPodName = pod.podName.split('-').slice(-2).join('-');
 
                     podEl.innerHTML = `
@@ -281,26 +340,54 @@
             });
         }
 
-        // === 관리 기능 함수들 ===
+        // === [기능 2] 실시간 로그 스트리밍 로직 ===
 
         function viewLogs(podName) {
-            document.getElementById('logModal').style.display = 'block';
-            document.getElementById('logTitle').textContent = `Logs: ${podName}`;
-            document.getElementById('logText').textContent = "Loading logs...";
+            // 기존에 열려있는 로그 연결이 있다면 종료
+            if (logEventSource) {
+                logEventSource.close();
+                logEventSource = null;
+            }
 
-            fetch(`/api/management/logs?pod=${podName}`)
-                .then(res => res.text())
-                .then(text => {
-                    document.getElementById('logText').textContent = text;
-                })
-                .catch(err => {
-                    document.getElementById('logText').textContent = "Failed to load logs: " + err;
-                });
+            const logModal = document.getElementById('logModal');
+            const logTextDiv = document.getElementById('logText');
+            const logTitle = document.getElementById('logTitle');
+
+            logModal.style.display = 'block';
+            logTitle.textContent = `Logs: ${podName} (Live)`;
+            logTextDiv.textContent = ""; // 내용 초기화
+
+            // SSE 연결 시작 (기존 300줄 + 실시간)
+            const sseUrl = `/api/management/logs/stream?pod=${encodeURIComponent(podName)}`;
+            console.log(`Starting log stream: ${sseUrl}`);
+            
+            logEventSource = new EventSource(sseUrl);
+
+            logEventSource.onmessage = function(event) {
+                // 데이터가 들어올 때마다 추가하고 스크롤을 맨 아래로 이동
+                logTextDiv.textContent += event.data + "\n";
+                logTextDiv.scrollTop = logTextDiv.scrollHeight;
+            };
+
+            logEventSource.onerror = function(err) {
+                console.error("Log Stream Error or Closed:", err);
+                // 연결이 끊기거나 에러 발생 시 메시지 표시 (선택사항)
+                // logTextDiv.textContent += "\n[Stream connection closed]";
+                logEventSource.close();
+            };
         }
 
         function closeLogModal() {
             document.getElementById('logModal').style.display = 'none';
+            // 모달을 닫을 때 리소스 절약을 위해 SSE 연결 종료
+            if (logEventSource) {
+                console.log("Closing log stream...");
+                logEventSource.close();
+                logEventSource = null;
+            }
         }
+
+        // === 관리 기능 함수들 (기존 유지) ===
 
         function restartPod(podName) {
             if(!confirm(`⚠️ 경고: 파드(${podName})를 강제 종료하시겠습니까?\nKubernetes가 자동으로 새 파드를 생성합니다.`)) return;
@@ -345,8 +432,10 @@
             .catch(err => alert("통신 오류: " + err));
         }
 
+        // 페이지를 떠날 때 모든 SSE 연결 정리
         window.addEventListener('beforeunload', () => {
             if (eventSource) eventSource.close();
+            if (logEventSource) logEventSource.close();
         });
     </script>
 </body>
