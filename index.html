@@ -203,7 +203,7 @@
 
         <div id="resultContainer" class="result-container">
             <div class="result-title">🎉 Deployment Completed Successfully!</div>
-            <div class="result-desc">Click the button below to access the deployed services.</div>
+            <div class="result-desc">Click the buttons below to access your deployed services.</div>
             <div id="serviceLinks" class="service-links"></div>
             <button id="goToDashboardBtn" class="dashboard-btn" onclick="moveToDashboard()">📊 Go to Dashboard</button>
         </div>
@@ -218,13 +218,11 @@
 
         <div id="status"></div>
 
-        <!-- ECR 푸시 단계 서비스 카드 -->
         <div id="ecrCardsContainer" class="service-cards-container">
             <div class="cards-title">🗂️ Build & ECR Push Progress</div>
             <div class="cards-grid" id="ecrCardsGrid"></div>
         </div>
 
-        <!-- K8s 배포 단계 서비스 카드 -->
         <div id="serviceCardsContainer" class="service-cards-container">
             <div class="cards-title">☸️ EKS Deployment Progress</div>
             <div class="cards-grid" id="cardsGrid"></div>
@@ -260,20 +258,20 @@
                 <div class="deployment-steps">
                     <div class="step" data-step="SCAN">
                         <div class="step-icon">🔍</div>
-                        <div class="step-info"><div class="step-name">Git Repository Scan</div><div class="step-status">Waiting...</div></div>
+                        <div class="step-info"><div class="step-name">Git Repository Scan</div><div class="step-status">Pending...</div></div>
                     </div>
                     <div class="step" data-step="BUILD">
                         <div class="step-icon">🗂️</div>
-                        <div class="step-info"><div class="step-name">Build & ECR Push</div><div class="step-status">Waiting...</div></div>
+                        <div class="step-info"><div class="step-name">Build & ECR Push</div><div class="step-status">Pending...</div></div>
                     </div>
                     <div class="step" data-step="COMPLETE">
                         <div class="step-icon">✅</div>
-                        <div class="step-info"><div class="step-name">ECR Push Complete</div><div class="step-status">Waiting...</div></div>
+                        <div class="step-info"><div class="step-name">ECR Push Complete</div><div class="step-status">Pending...</div></div>
                     </div>
                 </div>`;
             grid.appendChild(card);
             ecrCardsMap[serviceName] = card;
-            addLog(`🐳 Service tracking started: ${serviceName}`, 'info');
+            addLog(`🐳 Tracking service: ${serviceName}`, 'info');
         }
 
         function updateECRServiceCard(serviceName, status) {
@@ -289,9 +287,9 @@
                 scanStep.classList.add('pending');
                 scanStep.querySelector('.step-status').innerHTML = 'Scanning Git Repository... <span class="step-spinner"></span>';
                 buildStep.classList.remove('pending', 'success');
-                buildStep.querySelector('.step-status').textContent = 'Waiting...';
+                buildStep.querySelector('.step-status').textContent = 'Pending...';
                 completeStep.classList.remove('pending', 'success');
-                completeStep.querySelector('.step-status').textContent = 'Waiting...';
+                completeStep.querySelector('.step-status').textContent = 'Pending...';
             } else if (status === 'PUSHING') {
                 scanStep.classList.remove('pending');
                 scanStep.classList.add('success');
@@ -300,7 +298,7 @@
                 buildStep.classList.add('pending');
                 buildStep.querySelector('.step-status').innerHTML = 'Building & Pushing to ECR... <span class="step-spinner"></span>';
                 completeStep.classList.remove('pending', 'success');
-                completeStep.querySelector('.step-status').textContent = 'Waiting...';
+                completeStep.querySelector('.step-status').textContent = 'Pending...';
             } else if (status === 'PUSHED') {
                 scanStep.classList.remove('pending');
                 scanStep.classList.add('success');
@@ -345,7 +343,7 @@
                                 } else if (serviceStatus === 'PUSHING') {
                                     addLog(`🗂️ ${serviceName}: Building & Pushing to ECR...`, 'info');
                                 } else if (serviceStatus === 'PUSHED') {
-                                    addLog(`✅ ${serviceName}: ECR Push Complete`, 'stage-success');
+                                    addLog(`📦 ${serviceName}: ECR Push Complete`, 'stage-success');
                                 }
                                 serviceStatusMap[serviceName] = serviceStatus;
                             }
@@ -353,20 +351,20 @@
 
                         const allPushed = services.every(s => s.status === 'PUSHED');
                         if (allPushed) {
-                            addLog('📦 All services ECR push complete', 'stage-success');
+                            addLog('📦 All services pushed to ECR', 'stage-success');
                             stopPolling();
                         }
                     }
                 }
             } catch (error) {
-                console.error('Polling error:', error);
+                console.error('Polling Error:', error);
             }
         }
 
         function startPolling(repoUrl) {
             currentRepoUrl = repoUrl;
             serviceStatusMap = {};
-            addLog('🔍 MSA service scan and analysis started', 'info');
+            addLog('🔍 Starting MSA Service Scan & Analysis', 'info');
             pollingInterval = setInterval(() => { pollBuildStatus(repoUrl); }, 3000);
         }
 
@@ -404,7 +402,7 @@
             const repoUrl = document.getElementById('repoUrl').value.trim();
             const connectBtn = document.getElementById('connectBtn');
 
-            if (!repoUrl) { showStatus('Please enter a Repository URL.', 'error'); return; }
+            if (!repoUrl) { showStatus('Please enter the Repository URL.', 'error'); return; }
 
             isProcessing = true;
             connectBtn.disabled = true;
@@ -417,7 +415,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     if (data.state !== 'NO_EXIST') {
-                        if(confirm("This project is already deployed. Would you like to go to the dashboard?")) {
+                        if(confirm("Project already deployed. Move to dashboard?")) {
                             moveToDashboard();
                             return;
                         } else {
@@ -427,7 +425,7 @@
                         }
                     }
                 }
-            } catch (e) { console.error("Status check failed, proceeding", e); }
+            } catch (e) { console.error("Status check failed, proceeding...", e); }
 
             connectSSE();
         }
@@ -437,12 +435,12 @@
             if (repoUrl) {
                 const encodedUrl = encodeURIComponent(repoUrl);
                 window.location.href = `/dashboard.html?repo=${encodedUrl}`;
-            } else { alert("Repository URL is missing."); }
+            } else { alert("No Repository URL."); }
         }
 
         function connectSSE() {
             const repoUrl = document.getElementById('repoUrl').value.trim();
-            if (!repoUrl) { showStatus('Please enter a Repository URL.', 'error'); return; }
+            if (!repoUrl) { showStatus('Please enter the Repository URL.', 'error'); return; }
 
             if (eventSource) eventSource.close();
 
@@ -465,18 +463,18 @@
             const encodedUrl = encodeURIComponent(repoUrl);
             const sseUrl = `/api/metrics/deployments?repo_url=${encodedUrl}`;
 
-            addLog('Attempting to connect to deployment monitoring SSE...', 'info');
+            addLog('Attempting SSE connection for deployment monitoring...', 'info');
             eventSource = new EventSource(sseUrl);
 
             sendRepositoryRequest(repoUrl);
 
             eventSource.addEventListener('connected', (e) => {
                 showStatus('✅ Connection Successful', 'connected');
-                addLog('✅ SSE stream connected: ' + e.data, 'connected');
+                addLog('✅ SSE Stream Connected: ' + e.data, 'connected');
             });
 
             eventSource.addEventListener('stage-1-start', (e) => {
-                updateStage(1, 'Stage 1: MSA Service Discovery', 'Finding services connected to the repository...');
+                updateStage(1, 'Stage 1: Discovering MSA Services', 'Searching for services connected to the Repository...');
                 addLog(e.data, 'stage-start');
             });
 
@@ -537,7 +535,7 @@
                     if (!serviceCardsMap[serviceName]) createServiceCard(serviceName);
                     updateServiceStep(serviceName, step, status, message);
                     if (status === 'FAILED') handleServiceFailure(serviceName, step, message);
-                } catch (error) { console.error('service-update parsing error:', error); }
+                } catch (error) { console.error('service-update parse error:', error); }
             });
 
             eventSource.addEventListener('all-complete', (e) => {
@@ -546,9 +544,9 @@
                     const message = data.message;
                     const ingressUrl = data.address;
 
-                    updateStage(99, '✅ Deployment Complete', 'All steps completed successfully');
+                    updateStage(99, '✅ Deployment Complete', 'All stages completed successfully');
                     showStatus('🎉 ' + message, 'connected');
-                    addLog('✅ Deployment complete. Access URL: ' + ingressUrl, 'stage-success');
+                    addLog('✅ Deployment Complete. Access URL: ' + ingressUrl, 'stage-success');
 
                     Object.keys(serviceCardsMap).forEach(serviceName => { serviceCardsMap[serviceName].classList.add('success'); });
 
@@ -569,14 +567,14 @@
                     setTimeout(() => disconnectSSE(), 3000);
                 } catch (err) {
                     console.error("all-complete parse error:", err);
-                    showStatus('🎉 Deployment successful: ' + e.data, 'connected');
+                    showStatus('🎉 Deployment Success: ' + e.data, 'connected');
                 }
             });
 
             eventSource.addEventListener('deployment-failed', (e) => {
                 updateStage(99, '❌ Deployment Failed', '');
-                showStatus('❌ Deployment failed: ' + e.data, 'error');
-                addLog('❌ Deployment failed: ' + e.data, 'stage-failed');
+                showStatus('❌ Deployment Failed: ' + e.data, 'error');
+                addLog('❌ Deployment Failed: ' + e.data, 'stage-failed');
                 handleDeploymentFailure(e.data);
                 stopPolling();
             });
@@ -610,6 +608,7 @@
             const logContainer = document.getElementById('logContainer');
             const logEntry = document.createElement('div');
             logEntry.className = 'log-entry ' + type;
+            // Use en-US locale for timestamp
             const timestamp = new Date().toLocaleTimeString('en-US');
             logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span>${message}`;
             logContainer.appendChild(logEntry);
@@ -642,20 +641,20 @@
                 <div class="deployment-steps">
                     <div class="step" data-step="RESOURCE">
                         <div class="step-icon">📦</div>
-                        <div class="step-info"><div class="step-name">K8s Resource Creation</div><div class="step-status">Waiting...</div></div>
+                        <div class="step-info"><div class="step-name">K8s Resource Creation</div><div class="step-status">Pending...</div></div>
                     </div>
                     <div class="step" data-step="POD">
                         <div class="step-icon">🚀</div>
-                        <div class="step-info"><div class="step-name">Pod Running</div><div class="step-status">Waiting...</div></div>
+                        <div class="step-info"><div class="step-name">Pod Startup</div><div class="step-status">Pending...</div></div>
                     </div>
                     <div class="step" data-step="INGRESS">
                         <div class="step-icon">🌐</div>
-                        <div class="step-info"><div class="step-name">External Access Setup</div><div class="step-status">Waiting...</div></div>
+                        <div class="step-info"><div class="step-name">External Access Setup</div><div class="step-status">Pending...</div></div>
                     </div>
                 </div>`;
             grid.appendChild(card);
             serviceCardsMap[serviceName] = card;
-            addLog(`🐳 K8s deployment tracking started: ${serviceName}`, 'info');
+            addLog(`🐳 K8s 배포 추적 시작: ${serviceName}`, 'info');
         }
 
         function updateServiceStep(serviceName, step, status, message) {
@@ -680,7 +679,7 @@
         function handleServiceFailure(serviceName, step, message) {
             const card = serviceCardsMap[serviceName];
             if (card) card.classList.add('failed');
-            const errorMsg = `Service [${serviceName}] failed at ${step} step: ${message}`;
+            const errorMsg = `Service [${serviceName}] failed at step ${step}: ${message}`;
             handleDeploymentFailure(errorMsg);
         }
 
@@ -688,8 +687,8 @@
             if (deploymentFailed) return;
             deploymentFailed = true;
             stopPolling();
-            updateStage(99, '❌ Deployment Failed', 'Deployment has been stopped');
-            showStatus('❌ Deployment failed: ' + reason, 'error');
+            updateStage(99, '❌ Deployment Failed', 'Deployment aborted');
+            showStatus('❌ Deployment Failed: ' + reason, 'error');
             addLog('❌ Connection closed due to deployment failure: ' + reason, 'stage-failed');
             setTimeout(() => {
                 if (eventSource) { eventSource.close(); eventSource = null; }
