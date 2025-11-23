@@ -265,7 +265,7 @@
                         <div class="step-info"><div class="step-name">Build & ECR Push</div><div class="step-status">Pending...</div></div>
                     </div>
                     <div class="step" data-step="COMPLETE">
-                        <div class="step-icon">✅</div>
+                        <div class="step-icon">📦</div>
                         <div class="step-info"><div class="step-name">ECR Push Complete</div><div class="step-status">Pending...</div></div>
                     </div>
                 </div>`;
@@ -290,7 +290,7 @@
                 buildStep.querySelector('.step-status').textContent = 'Pending...';
                 completeStep.classList.remove('pending', 'success');
                 completeStep.querySelector('.step-status').textContent = 'Pending...';
-            } else if (status === 'PUSHING') {
+            } else if (status === 'PUSHING' || status === 'BUILDING' || status === 'BUILT') {
                 scanStep.classList.remove('pending');
                 scanStep.classList.add('success');
                 scanStep.querySelector('.step-status').textContent = '✅ Scan Complete';
