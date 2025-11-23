@@ -231,7 +231,7 @@
         <div id="logContainer" class="log-container"></div>
     </div>
 
-    <script>
+<script>
         let eventSource = null;
         let currentStage = 0;
         let serviceCardsMap = {};
@@ -242,6 +242,7 @@
         let currentRepoUrl = '';
         let serviceStatusMap = {};
         let isProcessing = false;
+        let hasScrolledToEcr = false; // [추가] 스크롤 상태 변수
 
         function createECRServiceCard(serviceName) {
             if (ecrCardsMap[serviceName]) return;
@@ -326,6 +327,12 @@
                         const services = data.repository.services;
 
                         document.getElementById('ecrCardsContainer').classList.add('show');
+                        
+                        // [추가] ECR 섹션으로 자동 스크롤
+                        if (!hasScrolledToEcr) {
+                            document.getElementById('ecrCardsContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            hasScrolledToEcr = true;
+                        }
 
                         services.forEach(service => {
                             const serviceName = service.serviceName;
@@ -340,7 +347,7 @@
                             if (!serviceStatusMap[serviceName] || serviceStatusMap[serviceName] !== serviceStatus) {
                                 if (serviceStatus === 'PENDING') {
                                     addLog(`🔍 ${serviceName}: Scanning Git Repository...`, 'info');
-                                } else if (serviceStatus === 'PUSHING') {
+                                } else if (serviceStatus === 'PUSHING' || serviceStatus === 'BUILDING' || serviceStatus === 'BUILT') {
                                     addLog(`🗂️ ${serviceName}: Building & Pushing to ECR...`, 'info');
                                 } else if (serviceStatus === 'PUSHED') {
                                     addLog(`📦 ${serviceName}: ECR Push Complete`, 'stage-success');
@@ -448,6 +455,7 @@
             serviceCardsMap = {};
             ecrCardsMap = {};
             discoveredServices.clear();
+            hasScrolledToEcr = false; // [추가] 초기화
 
             document.getElementById('connectBtn').disabled = true;
             document.getElementById('disconnectBtn').style.display = 'block';
@@ -488,17 +496,15 @@
             });
 
             eventSource.addEventListener('stage-2-start', (e) => {
-                // 1. 로그 및 데이터 파싱은 즉시 실행
                 let data = null;
                 try {
                     data = JSON.parse(e.data);
                     addLog(data.message, 'stage-start');
                 } catch (err) {
                     addLog(e.data, 'stage-start');
-                    return; // 파싱 실패 시 중단
+                    return; 
                 }
 
-                // 2. 실제 배포 API 요청 (백그라운드 로직은 기존 타이밍 유지)
                 setTimeout(() => {
                     if (data && data.payload) {
                         fetch('/api/api/deploy', {
@@ -509,23 +515,17 @@
                     }
                 }, 2000);
 
-                // 3. ★ UI 화면 전환을 3초 뒤에 일괄 처리 (동시 교체) ★
                 setTimeout(() => {
-                    // A. 단계 텍스트 업데이트
                     updateStage(2, 'Stage 2: EKS Deployment', 'Deploying to Kubernetes cluster...');
-
-                    // B. ECR 카드 컨테이너 숨기기 (기존 UI 끄기)
                     document.getElementById('ecrCardsContainer').classList.remove('show');
 
-                    // C. EKS 서비스 카드 생성 및 컨테이너 보이기 (새 UI 켜기)
-                    // initializeServiceCards 함수가 .show 클래스를 추가하므로 여기서 실행
                     if (data && data.payload && data.payload.services) {
                         initializeServiceCards(data.payload.services.length);
                         data.payload.services.forEach(service => {
                             createServiceCard(service.serviceName);
                         });
                     }
-                }, 3000); // 3초 딜레이
+                }, 3000); 
             });
 
             eventSource.addEventListener('service-update', (e) => {
@@ -564,6 +564,12 @@
                     });
 
                     document.getElementById('resultContainer').style.display = 'block';
+                    
+                    // [추가] 배포 완료 시 상단 결과창으로 스크롤 이동
+                    setTimeout(() => {
+                        document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+
                     setTimeout(() => disconnectSSE(), 3000);
                 } catch (err) {
                     console.error("all-complete parse error:", err);
@@ -608,7 +614,6 @@
             const logContainer = document.getElementById('logContainer');
             const logEntry = document.createElement('div');
             logEntry.className = 'log-entry ' + type;
-            // Use en-US locale for timestamp
             const timestamp = new Date().toLocaleTimeString('en-US');
             logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span>${message}`;
             logContainer.appendChild(logEntry);
