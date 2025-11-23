@@ -1,173 +1,745 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>실시간 서비스 대시보드</title>
+    <title>Live Services Dashboard</title>
     <style>
         /* === Global & Reset === */
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(-45deg, #e8eaf6, #f3e5f5, #e1f5fe, #f1f8e9);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
             min-height: 100vh;
-            padding: 20px;
+            padding: 30px;
             color: #333;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.08), transparent 60%),
+                radial-gradient(circle at 80% 80%, rgba(156, 39, 176, 0.08), transparent 60%),
+                radial-gradient(circle at 40% 20%, rgba(33, 150, 243, 0.08), transparent 60%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         /* === Layout === */
         .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(30px);
+            border-radius: 32px;
+            padding: 48px;
+            box-shadow:
+                0 20px 60px rgba(102, 126, 234, 0.12),
+                0 8px 20px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+            max-width: 1400px;
             margin: 0 auto;
             width: 100%;
+            position: relative;
+            z-index: 1;
+            animation: floatIn 1s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.8);
         }
 
         /* === Header === */
         .dashboard-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 24px;
+            border: 1px solid rgba(102, 126, 234, 0.15);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.06);
+            position: relative;
+            animation: floatIn 1s ease-out 0.2s backwards;
         }
-        .header-title h1 { font-size: 24px; font-weight: 800; color: #2d3436; margin-bottom: 5px; }
-        .header-title p { font-size: 14px; color: #636e72; }
+
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 900;
+            color: #2d3436;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header-title p {
+            font-size: 14px;
+            color: #636e72;
+            font-weight: 500;
+            opacity: 0;
+            animation: floatIn 0.6s ease-out 0.4s forwards;
+        }
+
         .live-badge {
-            background: #e6f7ed; color: #00b894; padding: 8px 16px;
-            border-radius: 30px; font-size: 13px; font-weight: 700;
-            display: flex; align-items: center; gap: 8px; border: 1px solid #ccf0db;
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            animation: floatIn 0.8s ease-out 0.3s backwards;
         }
+
+        .live-badge::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: shimmer 3s infinite;
+        }
+
         .live-dot {
-            width: 8px; height: 8px; background: #00b894; border-radius: 50%;
-            box-shadow: 0 0 0 0 rgba(0, 184, 148, 0.7); animation: pulse-green 2s infinite;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+            animation: pulse-green 2s infinite;
+            position: relative;
+            z-index: 1;
         }
 
         /* === Grid System === */
         .metric-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 30px;
         }
 
         /* === Service Card === */
-        .metric-card {
-            background: #fff; border: 1px solid #dfe6e9; border-radius: 16px;
-            padding: 20px; transition: all 0.3s ease; position: relative; overflow: hidden;
-            display: flex; flex-direction: column;
+        @keyframes cardSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
-        .metric-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: #74b9ff; }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(102, 126, 234, 0.15);
+            border-radius: 28px;
+            padding: 28px;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow:
+                0 8px 32px rgba(102, 126, 234, 0.08),
+                0 2px 8px rgba(0, 0, 0, 0.04);
+            animation: cardSlideUp 0.6s ease-out backwards;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(102, 126, 234, 0.08),
+                transparent
+            );
+            transition: left 0.6s ease;
+        }
+
+        .metric-card:hover::before {
+            left: 100%;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-12px) scale(1.01);
+            box-shadow:
+                0 24px 56px rgba(102, 126, 234, 0.16),
+                0 8px 24px rgba(102, 126, 234, 0.08);
+            border-color: rgba(102, 126, 234, 0.25);
+        }
+
+        .metric-card:nth-child(1) { animation-delay: 0.1s; }
+        .metric-card:nth-child(2) { animation-delay: 0.2s; }
+        .metric-card:nth-child(3) { animation-delay: 0.3s; }
+        .metric-card:nth-child(4) { animation-delay: 0.4s; }
+        .metric-card:nth-child(5) { animation-delay: 0.5s; }
+        .metric-card:nth-child(6) { animation-delay: 0.6s; }
 
         /* === Card Header === */
         .mc-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding-bottom: 15px; border-bottom: 2px solid #f1f2f6; margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.08);
+            position: relative;
         }
-        .mc-title { font-size: 18px; font-weight: 700; color: #2d3436; display: flex; align-items: center; gap: 8px; }
-        .service-icon { font-size: 20px; }
-        .pod-count { font-size: 12px; color: #999; margin-left: 5px; }
+
+        .mc-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-radius: 2px;
+        }
+
+        .metric-card:hover .mc-header::after {
+            width: 120px;
+        }
+
+        .mc-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mc-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #2d3436;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .service-icon {
+            font-size: 24px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .metric-card:hover .service-icon {
+            transform: scale(1.15) rotate(3deg);
+        }
+
+        .pod-count {
+            font-size: 12px;
+            color: #667eea;
+            margin-left: 8px;
+            padding: 4px 12px;
+            background: rgba(102, 126, 234, 0.12);
+            border-radius: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover .pod-count {
+            background: rgba(102, 126, 234, 0.2);
+            transform: scale(1.05);
+        }
 
         /* === Service Controls === */
-        .service-controls { display: flex; gap: 5px; }
+        .service-controls {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
 
         .btn-svc {
-            border: none; background: #f1f2f6; border-radius: 6px; padding: 5px 10px;
-            cursor: pointer; font-size: 14px; transition: 0.2s;
+            border: none;
+            background: rgba(102, 126, 234, 0.08);
+            border-radius: 14px;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.05);
+            position: relative;
+            overflow: hidden;
         }
-        .btn-svc:hover { background: #dfe6e9; transform: scale(1.05); }
+
+        .btn-svc::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.15);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-svc:hover::before {
+            width: 200px;
+            height: 200px;
+        }
+
+        .btn-svc:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-3px) scale(1.08);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+        }
+
+        .btn-svc:active {
+            transform: translateY(-1px) scale(1.03);
+        }
 
         /* [Minimal-White-React Style Button] for Ingress Link */
         .btn-link {
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
-            color: #475569;
-            border-radius: 6px;
-            padding: 5px 12px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            background: white;
+            color: #667eea;
+            border-radius: 14px;
+            padding: 10px 16px;
             cursor: pointer;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 5px;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            gap: 6px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
             text-decoration: none;
+            position: relative;
+            overflow: hidden;
         }
+
+        .btn-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.08), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn-link:hover::before {
+            left: 100%;
+        }
+
         .btn-link:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
-            color: #0f172a;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: transparent;
+            color: white;
+            transform: translateY(-3px) scale(1.08);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
         }
-        .btn-link:active { transform: translateY(0); }
+
+        .btn-link:active {
+            transform: translateY(-1px) scale(1.03);
+        }
 
         /* === Pod List === */
-        .pod-list-container { display: flex; flex-direction: column; gap: 10px; }
+        .pod-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        @keyframes podFadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
 
         .pod-item {
-            background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 10px;
-            padding: 12px; font-size: 13px;
+            background: white;
+            border: 1px solid rgba(102, 126, 234, 0.12);
+            border-radius: 16px;
+            padding: 16px;
+            font-size: 13px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+            animation: podFadeIn 0.4s ease-out backwards;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.04);
         }
-        .pod-item:hover { border-color: #b2bec3; background: #fff; }
 
-        .pod-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .pod-id { font-weight: 700; color: #2d3436; font-family: monospace; font-size: 14px; }
+        .pod-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            transform: scaleY(0);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .pod-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .pod-item:nth-child(1) { animation-delay: 0.1s; }
+        .pod-item:nth-child(2) { animation-delay: 0.15s; }
+        .pod-item:nth-child(3) { animation-delay: 0.2s; }
+        .pod-item:nth-child(4) { animation-delay: 0.25s; }
+
+        .pod-item:hover {
+            border-color: rgba(102, 126, 234, 0.3);
+            background: rgba(102, 126, 234, 0.02);
+            transform: translateX(8px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.12);
+        }
+
+        .pod-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .pod-id {
+            font-weight: 700;
+            color: #2d3436;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 6px 12px;
+            background: rgba(102, 126, 234, 0.08);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .pod-item:hover .pod-id {
+            background: rgba(102, 126, 234, 0.15);
+            color: #667eea;
+            transform: scale(1.03);
+        }
 
         .mc-status {
-            font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 14px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+            transition: all 0.3s ease;
         }
-        .mc-status.running { background: #e6f7ed; color: #00b894; }
-        .mc-status.pending { background: #fff8e1; color: #ffa502; }
-        .mc-status.error { background: #ffebee; color: #ff7675; }
+
+        .mc-status.running {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+        }
+
+        .mc-status.pending {
+            background: linear-gradient(135deg, #fdcb6e, #ffa502);
+            color: white;
+        }
+
+        .mc-status.error {
+            background: linear-gradient(135deg, #ff7675, #d63031);
+            color: white;
+        }
+
+        .pod-item:hover .mc-status {
+            transform: scale(1.05);
+        }
 
         .pod-metrics {
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;
-            color: #636e72; margin-bottom: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            color: #636e72;
+            margin-bottom: 14px;
+            padding: 12px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 12px;
         }
-        .pod-metrics span { font-weight: 600; color: #2d3436; }
 
-        .pod-actions { display: flex; gap: 5px; }
-        .btn-pod {
-            flex: 1; padding: 6px; border: none; border-radius: 6px;
-            font-size: 11px; font-weight: 600; cursor: pointer; color: white;
-            display: flex; align-items: center; justify-content: center; gap: 4px;
+        .pod-metrics div {
+            transition: transform 0.3s ease;
+            font-size: 12px;
         }
-        .btn-pod:hover { opacity: 0.9; }
-        .btn-log { background-color: #636e72; }
-        .btn-kill { background-color: #ff7675; }
+
+        .pod-metrics div:hover {
+            transform: translateY(-2px);
+        }
+
+        .pod-metrics span {
+            font-weight: 700;
+            color: #667eea;
+            background: white;
+            padding: 3px 8px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-left: 4px;
+            box-shadow: 0 1px 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .pod-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-pod {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-pod::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        .btn-pod:hover::before {
+            width: 150px;
+            height: 150px;
+        }
+
+        .btn-pod:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        }
+
+        .btn-pod:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        .btn-log {
+            background: linear-gradient(135deg, #636e72, #2d3436);
+        }
+
+        .btn-kill {
+            background: linear-gradient(135deg, #ff7675, #d63031);
+        }
 
         /* === Utility & Modal === */
-        #loadingMessage { grid-column: 1 / -1; text-align: center; padding: 40px; color: #636e72; background: #f8f9fa; border-radius: 12px; }
-        .back-btn {
-            display: inline-block; margin-top: 40px; padding: 12px 24px;
-            background: #2d3436; color: white; text-decoration: none;
-            border-radius: 8px; font-weight: 600; transition: background 0.2s;
-            cursor: pointer; border: none;
+        #loadingMessage {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: #636e72;
+            background: rgba(248, 249, 250, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 2px dashed rgba(102, 126, 234, 0.2);
         }
-        .back-btn:hover { background: #000; }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 40px;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #2d3436, #000000);
+            color: white;
+            text-decoration: none;
+            border-radius: 16px;
+            font-weight: 700;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .back-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transition: left 0.6s;
+        }
+
+        .back-btn:hover::before {
+            left: 100%;
+        }
+
+        .back-btn:hover {
+            background: linear-gradient(135deg, #000000, #2d3436);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
 
         #logModal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 1000;
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
         #logContent {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 80%; max-width: 800px; height: 70%;
-            background: #2d3436; color: #f1f2f6;
-            border-radius: 12px; padding: 20px; display: flex; flex-direction: column;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            max-width: 950px;
+            height: 78%;
+            background: linear-gradient(135deg, #2d3436, #000000);
+            color: #f1f2f6;
+            border-radius: 28px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 24px 72px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            animation: modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+
         #logText {
-            flex: 1; overflow-y: auto; white-space: pre-wrap; font-family: monospace;
-            font-size: 13px; line-height: 1.5; padding: 10px; background: #000; border-radius: 8px;
-            scroll-behavior: smooth; /* 부드러운 스크롤 */
+            flex: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            padding: 18px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 16px;
+            scroll-behavior: smooth;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .close-modal { align-self: flex-end; color: white; cursor: pointer; margin-bottom: 10px; font-size: 20px; }
+
+        .close-modal {
+            align-self: flex-end;
+            color: white;
+            cursor: pointer;
+            margin-bottom: 14px;
+            font-size: 26px;
+            padding: 10px 18px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .close-modal:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(1.08);
+        }
 
         /* Animation */
         @keyframes pulse-green {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 184, 148, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 184, 148, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 184, 148, 0); }
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+            }
         }
     </style>
 </head>
@@ -176,7 +748,7 @@
         <header class="dashboard-header">
             <div class="header-title">
                 <h1>📊 Live Ops Dashboard</h1>
-                <p>실시간 모니터링 및 서비스 제어</p>
+                <p>Real-time monitoring and service control</p>
             </div>
             <div class="live-badge">
                 <div class="live-dot"></div>
@@ -186,17 +758,17 @@
 
         <div class="metric-grid" id="metricGrid">
             <div id="loadingMessage">
-                데이터 수신 대기 중...<br>
-                <small>(잠시 후 데이터가 표시됩니다)</small>
+                Waiting for data...<br>
+                <small>(Data will appear shortly)</small>
             </div>
         </div>
 
-        <button class="back-btn" onclick="location.href='/'">← 메인으로 돌아가기</button>
+        <button class="back-btn" onclick="location.href='/'">← Back to Home</button>
     </div>
 
     <div id="logModal">
         <div id="logContent">
-            <span class="close-modal" onclick="closeLogModal()">× 닫기</span>
+            <span class="close-modal" onclick="closeLogModal()">× Close</span>
             <h3 id="logTitle" style="margin-bottom: 10px;">Pod Logs</h3>
             <div id="logText">Connecting to log stream...</div>
         </div>
@@ -215,7 +787,7 @@
             currentRepoUrl = repoUrl;
 
             if (!repoUrl) {
-                alert("Repository 정보가 없습니다.");
+                alert("Repository information is missing.");
                 window.location.href = "/";
                 return;
             }
@@ -266,8 +838,8 @@
                 if (globalIngressUrl) {
                     const targetUrl = `${globalIngressUrl}/${serviceName}`; // Ingress 경로 규칙 적용
                     linkBtnHtml = `
-                        <button class="btn-link" onclick="window.open('${targetUrl}', '_blank')" title="새 탭에서 열기">
-                            🌐 접속
+                        <button class="btn-link" onclick="window.open('${targetUrl}', '_blank')" title="Open in new tab">
+                            🌐 Access
                         </button>
                     `;
                 }
@@ -279,14 +851,17 @@
 
                     serviceCard.innerHTML = `
                         <div class="mc-header">
-                            <div class="mc-title">
-                                <span class="service-icon">📦</span>
-                                <span>${serviceName}</span>
-                                <span class="pod-count">(${pods.length} pods)</span>
+                            <div class="mc-header-top">
+                                <div class="mc-title">
+                                    <span class="service-icon">📦</span>
+                                    <span>${serviceName}</span>
+                                    <span class="pod-count">(${pods.length} pods)</span>
+                                </div>
                             </div>
                             <div class="service-controls">
-                                ${linkBtnHtml} <button class="btn-svc" onclick="scaleService('${serviceName}')" title="Scale (Pod 개수 조절)">⚖️</button>
-                                <button class="btn-svc" onclick="restartService('${serviceName}')" title="Restart App (전체 재시작)">🚀</button>
+                                ${linkBtnHtml}
+                                <button class="btn-svc" onclick="scaleService('${serviceName}')" title="Scale pods">⚖️ Scale</button>
+                                <button class="btn-svc" onclick="restartService('${serviceName}')" title="Restart service">🚀 Restart</button>
                             </div>
                         </div>
                         <div class="pod-list-container"></div>
@@ -299,7 +874,7 @@
                     if (globalIngressUrl && !controls.querySelector('.btn-link')) {
                          const tempDiv = document.createElement('div');
                          const targetUrl = `${globalIngressUrl}/${serviceName}`;
-                         tempDiv.innerHTML = `<button class="btn-link" onclick="window.open('${targetUrl}', '_blank')" title="새 탭에서 열기">🌐 접속</button>`;
+                         tempDiv.innerHTML = `<button class="btn-link" onclick="window.open('${targetUrl}', '_blank')" title="Open in new tab">🌐 Access</button>`;
                          // 버튼을 맨 앞에 추가
                          controls.insertBefore(tempDiv.firstChild, controls.firstChild);
                     }
@@ -390,12 +965,12 @@
         // === 관리 기능 함수들 (기존 유지) ===
 
         function restartPod(podName) {
-            if(!confirm(`⚠️ 경고: 파드(${podName})를 강제 종료하시겠습니까?\nKubernetes가 자동으로 새 파드를 생성합니다.`)) return;
+            if(!confirm(`⚠️ Warning: Are you sure you want to force terminate pod (${podName})?\nKubernetes will automatically create a new pod.`)) return;
             postAction('/api/management/pod/restart', { podName: podName });
         }
 
         function restartService(serviceName) {
-            if(!confirm(`⚠️ 경고: '${serviceName}' 서비스를 롤아웃 재시작합니다.\n모든 파드가 순차적으로 교체됩니다.`)) return;
+            if(!confirm(`⚠️ Warning: This will perform a rollout restart of '${serviceName}'.\nAll pods will be replaced sequentially. Proceed?`)) return;
             postAction('/api/management/service/restart', {
                 repoUrl: currentRepoUrl,
                 serviceName: serviceName
@@ -403,12 +978,12 @@
         }
 
         function scaleService(serviceName) {
-            const count = prompt(`'${serviceName}' 서비스의 파드 개수를 입력하세요 (1~10):`, "1");
+            const count = prompt(`Enter the number of pods for '${serviceName}' (1~10):`, "1");
             if(count === null) return;
 
             const replicas = parseInt(count);
             if(isNaN(replicas) || replicas < 0 || replicas > 10) {
-                alert("잘못된 숫자입니다. (0~10 사이)");
+                alert("Invalid number. (0-10)");
                 return;
             }
 
@@ -426,10 +1001,9 @@
                 body: JSON.stringify(data)
             })
             .then(res => {
-                if(res.ok) alert("✅ 명령이 전송되었습니다. 잠시 후 반영됩니다.");
-                else alert("❌ 명령 실패");
+                if(!res.ok) alert("❌ Command failed");
             })
-            .catch(err => alert("통신 오류: " + err));
+            .catch(err => alert("Communication error: " + err));
         }
 
         // 페이지를 떠날 때 모든 SSE 연결 정리

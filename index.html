@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>배포 모니터링</title>
+    <title>Deployment Monitoring</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -194,18 +194,18 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚀 배포 모니터링</h1>
+        <h1>🚀 Deployment Monitoring</h1>
 
         <div id="stageIndicator" class="stage-indicator">
-            <h2 id="stageName">대기 중...</h2>
+            <h2 id="stageName">Waiting...</h2>
             <div class="stage-description" id="stageDescription"></div>
         </div>
 
         <div id="resultContainer" class="result-container">
-            <div class="result-title">🎉 배포가 성공적으로 완료되었습니다!</div>
-            <div class="result-desc">아래 버튼을 클릭하여 배포된 서비스에 접속하세요.</div>
+            <div class="result-title">🎉 Deployment Completed Successfully!</div>
+            <div class="result-desc">Click the button below to access the deployed services.</div>
             <div id="serviceLinks" class="service-links"></div>
-            <button id="goToDashboardBtn" class="dashboard-btn" onclick="moveToDashboard()">📊 대시보드로 이동하기</button>
+            <button id="goToDashboardBtn" class="dashboard-btn" onclick="moveToDashboard()">📊 Go to Dashboard</button>
         </div>
 
         <div class="input-group">
@@ -213,20 +213,20 @@
             <input type="text" id="repoUrl" placeholder="https://github.com/username/repo" value="https://github.com/example/test-repo">
         </div>
 
-        <button id="connectBtn" onclick="handleStartButton()">배포 모니터링 시작</button>
-        <button id="disconnectBtn" class="disconnect-btn" onclick="disconnectSSE()" style="display: none;">연결 종료</button>
+        <button id="connectBtn" onclick="handleStartButton()">Start Deployment Monitoring</button>
+        <button id="disconnectBtn" class="disconnect-btn" onclick="disconnectSSE()" style="display: none;">Disconnect</button>
 
         <div id="status"></div>
 
         <!-- ECR 푸시 단계 서비스 카드 -->
         <div id="ecrCardsContainer" class="service-cards-container">
-            <div class="cards-title">🗂️ 빌드 및 ECR 푸시 진행상황</div>
+            <div class="cards-title">🗂️ Build & ECR Push Progress</div>
             <div class="cards-grid" id="ecrCardsGrid"></div>
         </div>
 
         <!-- K8s 배포 단계 서비스 카드 -->
         <div id="serviceCardsContainer" class="service-cards-container">
-            <div class="cards-title">☸️ EKS 배포 진행상황</div>
+            <div class="cards-title">☸️ EKS Deployment Progress</div>
             <div class="cards-grid" id="cardsGrid"></div>
         </div>
 
@@ -260,20 +260,20 @@
                 <div class="deployment-steps">
                     <div class="step" data-step="SCAN">
                         <div class="step-icon">🔍</div>
-                        <div class="step-info"><div class="step-name">Git Repository 스캔</div><div class="step-status">대기 중...</div></div>
+                        <div class="step-info"><div class="step-name">Git Repository Scan</div><div class="step-status">Waiting...</div></div>
                     </div>
                     <div class="step" data-step="BUILD">
                         <div class="step-icon">🗂️</div>
-                        <div class="step-info"><div class="step-name">빌드 및 ECR 푸시</div><div class="step-status">대기 중...</div></div>
+                        <div class="step-info"><div class="step-name">Build & ECR Push</div><div class="step-status">Waiting...</div></div>
                     </div>
                     <div class="step" data-step="COMPLETE">
                         <div class="step-icon">✅</div>
-                        <div class="step-info"><div class="step-name">ECR 푸시 완료</div><div class="step-status">대기 중...</div></div>
+                        <div class="step-info"><div class="step-name">ECR Push Complete</div><div class="step-status">Waiting...</div></div>
                     </div>
                 </div>`;
             grid.appendChild(card);
             ecrCardsMap[serviceName] = card;
-            addLog(`🐳 서비스 추적 시작: ${serviceName}`, 'info');
+            addLog(`🐳 Service tracking started: ${serviceName}`, 'info');
         }
 
         function updateECRServiceCard(serviceName, status) {
@@ -287,30 +287,30 @@
             if (status === 'PENDING') {
                 scanStep.classList.remove('success');
                 scanStep.classList.add('pending');
-                scanStep.querySelector('.step-status').innerHTML = 'Git Repository 스캔 중... <span class="step-spinner"></span>';
+                scanStep.querySelector('.step-status').innerHTML = 'Scanning Git Repository... <span class="step-spinner"></span>';
                 buildStep.classList.remove('pending', 'success');
-                buildStep.querySelector('.step-status').textContent = '대기 중...';
+                buildStep.querySelector('.step-status').textContent = 'Waiting...';
                 completeStep.classList.remove('pending', 'success');
-                completeStep.querySelector('.step-status').textContent = '대기 중...';
+                completeStep.querySelector('.step-status').textContent = 'Waiting...';
             } else if (status === 'PUSHING') {
                 scanStep.classList.remove('pending');
                 scanStep.classList.add('success');
-                scanStep.querySelector('.step-status').textContent = '✅ 스캔 완료';
+                scanStep.querySelector('.step-status').textContent = '✅ Scan Complete';
                 buildStep.classList.remove('success');
                 buildStep.classList.add('pending');
-                buildStep.querySelector('.step-status').innerHTML = '빌드 및 ECR 푸시 중... <span class="step-spinner"></span>';
+                buildStep.querySelector('.step-status').innerHTML = 'Building & Pushing to ECR... <span class="step-spinner"></span>';
                 completeStep.classList.remove('pending', 'success');
-                completeStep.querySelector('.step-status').textContent = '대기 중...';
+                completeStep.querySelector('.step-status').textContent = 'Waiting...';
             } else if (status === 'PUSHED') {
                 scanStep.classList.remove('pending');
                 scanStep.classList.add('success');
-                scanStep.querySelector('.step-status').textContent = '✅ 스캔 완료';
+                scanStep.querySelector('.step-status').textContent = '✅ Scan Complete';
                 buildStep.classList.remove('pending');
                 buildStep.classList.add('success');
-                buildStep.querySelector('.step-status').textContent = '✅ 빌드 및 푸시 완료';
+                buildStep.querySelector('.step-status').textContent = '✅ Build & Push Complete';
                 completeStep.classList.remove('pending');
                 completeStep.classList.add('success');
-                completeStep.querySelector('.step-status').textContent = '✅ ECR 등록 완료';
+                completeStep.querySelector('.step-status').textContent = '✅ ECR Registration Complete';
                 card.classList.add('success');
             }
         }
@@ -341,11 +341,11 @@
 
                             if (!serviceStatusMap[serviceName] || serviceStatusMap[serviceName] !== serviceStatus) {
                                 if (serviceStatus === 'PENDING') {
-                                    addLog(`🔍 ${serviceName}: Git Repository 스캔 중...`, 'info');
+                                    addLog(`🔍 ${serviceName}: Scanning Git Repository...`, 'info');
                                 } else if (serviceStatus === 'PUSHING') {
-                                    addLog(`🗂️ ${serviceName}: 빌드 및 ECR 푸시 중...`, 'info');
+                                    addLog(`🗂️ ${serviceName}: Building & Pushing to ECR...`, 'info');
                                 } else if (serviceStatus === 'PUSHED') {
-                                    addLog(`✅ ${serviceName}: ECR 푸시 완료`, 'stage-success');
+                                    addLog(`✅ ${serviceName}: ECR Push Complete`, 'stage-success');
                                 }
                                 serviceStatusMap[serviceName] = serviceStatus;
                             }
@@ -353,20 +353,20 @@
 
                         const allPushed = services.every(s => s.status === 'PUSHED');
                         if (allPushed) {
-                            addLog('📦 모든 서비스 ECR 푸시 완료', 'stage-success');
+                            addLog('📦 All services ECR push complete', 'stage-success');
                             stopPolling();
                         }
                     }
                 }
             } catch (error) {
-                console.error('폴링 에러:', error);
+                console.error('Polling error:', error);
             }
         }
 
         function startPolling(repoUrl) {
             currentRepoUrl = repoUrl;
             serviceStatusMap = {};
-            addLog('🔍 MSA 서비스 스캔 및 분석 시작', 'info');
+            addLog('🔍 MSA service scan and analysis started', 'info');
             pollingInterval = setInterval(() => { pollBuildStatus(repoUrl); }, 3000);
         }
 
@@ -376,7 +376,7 @@
 
         async function sendRepositoryRequest(repoUrl) {
             try {
-                addLog(`분석 요청 전송 중... (${repoUrl})`, 'info');
+                addLog(`Sending analysis request... (${repoUrl})`, 'info');
                 const response = await fetch('/api/repository', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -387,13 +387,13 @@
                     startPolling(repoUrl);
                 } else {
                     const errorText = await response.text();
-                    addLog(`❌ 분석 요청 실패: ${response.status} - ${errorText}`, 'stage-failed');
-                    showStatus('Repository 요청 실패', 'error');
+                    addLog(`❌ Analysis request failed: ${response.status} - ${errorText}`, 'stage-failed');
+                    showStatus('Repository request failed', 'error');
                     stopPolling();
                 }
             } catch (error) {
                 console.error('Fetch Error:', error);
-                addLog(`❌ 통신 오류: ${error.message}`, 'stage-failed');
+                addLog(`❌ Communication error: ${error.message}`, 'stage-failed');
                 stopPolling();
             }
         }
@@ -404,7 +404,7 @@
             const repoUrl = document.getElementById('repoUrl').value.trim();
             const connectBtn = document.getElementById('connectBtn');
 
-            if (!repoUrl) { showStatus('Repository URL을 입력해주세요.', 'error'); return; }
+            if (!repoUrl) { showStatus('Please enter a Repository URL.', 'error'); return; }
 
             isProcessing = true;
             connectBtn.disabled = true;
@@ -417,7 +417,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     if (data.state !== 'NO_EXIST') {
-                        if(confirm("이미 배포된 프로젝트입니다. 대시보드로 이동하시겠습니까?")) {
+                        if(confirm("This project is already deployed. Would you like to go to the dashboard?")) {
                             moveToDashboard();
                             return;
                         } else {
@@ -427,7 +427,7 @@
                         }
                     }
                 }
-            } catch (e) { console.error("상태 확인 실패, 진행", e); }
+            } catch (e) { console.error("Status check failed, proceeding", e); }
 
             connectSSE();
         }
@@ -437,12 +437,12 @@
             if (repoUrl) {
                 const encodedUrl = encodeURIComponent(repoUrl);
                 window.location.href = `/dashboard.html?repo=${encodedUrl}`;
-            } else { alert("Repository URL이 없습니다."); }
+            } else { alert("Repository URL is missing."); }
         }
 
         function connectSSE() {
             const repoUrl = document.getElementById('repoUrl').value.trim();
-            if (!repoUrl) { showStatus('Repository URL을 입력해주세요.', 'error'); return; }
+            if (!repoUrl) { showStatus('Please enter a Repository URL.', 'error'); return; }
 
             if (eventSource) eventSource.close();
 
@@ -458,34 +458,34 @@
             document.getElementById('ecrCardsContainer').classList.remove('show');
             document.getElementById('ecrCardsGrid').innerHTML = '';
 
-            updateStage(0, '연결 중...', '');
+            updateStage(0, 'Connecting...', '');
             document.getElementById('logContainer').classList.add('show');
             clearLogs();
 
             const encodedUrl = encodeURIComponent(repoUrl);
             const sseUrl = `/api/metrics/deployments?repo_url=${encodedUrl}`;
 
-            addLog('배포 모니터링 SSE 연결 시도 중...', 'info');
+            addLog('Attempting to connect to deployment monitoring SSE...', 'info');
             eventSource = new EventSource(sseUrl);
 
             sendRepositoryRequest(repoUrl);
 
             eventSource.addEventListener('connected', (e) => {
-                showStatus('✅ 연결 성공', 'connected');
-                addLog('✅ SSE 스트림 연결됨: ' + e.data, 'connected');
+                showStatus('✅ Connection Successful', 'connected');
+                addLog('✅ SSE stream connected: ' + e.data, 'connected');
             });
 
             eventSource.addEventListener('stage-1-start', (e) => {
-                updateStage(1, '1단계: MSA 서비스 탐색', 'Repository에 연결된 서비스를 찾고 있습니다...');
+                updateStage(1, 'Stage 1: MSA Service Discovery', 'Finding services connected to the repository...');
                 addLog(e.data, 'stage-start');
             });
 
             eventSource.addEventListener('stage-1-success', (e) => { addLog(e.data, 'stage-success'); });
 
             eventSource.addEventListener('stage-1-failed', (e) => {
-                updateStage(1, '1단계: 실패', '');
+                updateStage(1, 'Stage 1: Failed', '');
                 addLog(e.data, 'stage-failed');
-                handleDeploymentFailure('1단계에서 실패');
+                handleDeploymentFailure('Failed at Stage 1');
                 stopPolling();
             });
 
@@ -514,7 +514,7 @@
                 // 3. ★ UI 화면 전환을 3초 뒤에 일괄 처리 (동시 교체) ★
                 setTimeout(() => {
                     // A. 단계 텍스트 업데이트
-                    updateStage(2, '2단계: EKS 배포', 'Kubernetes 클러스터에 배포 중...');
+                    updateStage(2, 'Stage 2: EKS Deployment', 'Deploying to Kubernetes cluster...');
 
                     // B. ECR 카드 컨테이너 숨기기 (기존 UI 끄기)
                     document.getElementById('ecrCardsContainer').classList.remove('show');
@@ -537,7 +537,7 @@
                     if (!serviceCardsMap[serviceName]) createServiceCard(serviceName);
                     updateServiceStep(serviceName, step, status, message);
                     if (status === 'FAILED') handleServiceFailure(serviceName, step, message);
-                } catch (error) { console.error('service-update 파싱 오류:', error); }
+                } catch (error) { console.error('service-update parsing error:', error); }
             });
 
             eventSource.addEventListener('all-complete', (e) => {
@@ -546,9 +546,9 @@
                     const message = data.message;
                     const ingressUrl = data.address;
 
-                    updateStage(99, '✅ 배포 완료', '모든 단계가 성공적으로 완료되었습니다');
+                    updateStage(99, '✅ Deployment Complete', 'All steps completed successfully');
                     showStatus('🎉 ' + message, 'connected');
-                    addLog('✅ 배포 완료. 접속 주소: ' + ingressUrl, 'stage-success');
+                    addLog('✅ Deployment complete. Access URL: ' + ingressUrl, 'stage-success');
 
                     Object.keys(serviceCardsMap).forEach(serviceName => { serviceCardsMap[serviceName].classList.add('success'); });
 
@@ -561,7 +561,7 @@
                         linkBtn.href = serviceLink;
                         linkBtn.target = "_blank";
                         linkBtn.className = "service-link-btn";
-                        linkBtn.innerHTML = `🔗 ${serviceName} 접속`;
+                        linkBtn.innerHTML = `🔗 Access ${serviceName}`;
                         linksContainer.appendChild(linkBtn);
                     });
 
@@ -569,14 +569,14 @@
                     setTimeout(() => disconnectSSE(), 3000);
                 } catch (err) {
                     console.error("all-complete parse error:", err);
-                    showStatus('🎉 배포 성공: ' + e.data, 'connected');
+                    showStatus('🎉 Deployment successful: ' + e.data, 'connected');
                 }
             });
 
             eventSource.addEventListener('deployment-failed', (e) => {
-                updateStage(99, '❌ 배포 실패', '');
-                showStatus('❌ 배포 실패: ' + e.data, 'error');
-                addLog('❌ 배포 실패: ' + e.data, 'stage-failed');
+                updateStage(99, '❌ Deployment Failed', '');
+                showStatus('❌ Deployment failed: ' + e.data, 'error');
+                addLog('❌ Deployment failed: ' + e.data, 'stage-failed');
                 handleDeploymentFailure(e.data);
                 stopPolling();
             });
@@ -591,7 +591,7 @@
             document.getElementById('disconnectBtn').style.display = 'none';
             document.getElementById('stageIndicator').classList.remove('show');
             isProcessing = false;
-            if (!deploymentFailed) showStatus('연결이 종료되었습니다.', 'info');
+            if (!deploymentFailed) showStatus('Connection closed.', 'info');
         }
 
         function updateStage(stage, name, description) {
@@ -610,7 +610,7 @@
             const logContainer = document.getElementById('logContainer');
             const logEntry = document.createElement('div');
             logEntry.className = 'log-entry ' + type;
-            const timestamp = new Date().toLocaleTimeString('ko-KR');
+            const timestamp = new Date().toLocaleTimeString('en-US');
             logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span>${message}`;
             logContainer.appendChild(logEntry);
             logContainer.scrollTop = logContainer.scrollHeight;
@@ -642,20 +642,20 @@
                 <div class="deployment-steps">
                     <div class="step" data-step="RESOURCE">
                         <div class="step-icon">📦</div>
-                        <div class="step-info"><div class="step-name">K8s 리소스 생성</div><div class="step-status">대기 중...</div></div>
+                        <div class="step-info"><div class="step-name">K8s Resource Creation</div><div class="step-status">Waiting...</div></div>
                     </div>
                     <div class="step" data-step="POD">
                         <div class="step-icon">🚀</div>
-                        <div class="step-info"><div class="step-name">Pod 구동</div><div class="step-status">대기 중...</div></div>
+                        <div class="step-info"><div class="step-name">Pod Running</div><div class="step-status">Waiting...</div></div>
                     </div>
                     <div class="step" data-step="INGRESS">
                         <div class="step-icon">🌐</div>
-                        <div class="step-info"><div class="step-name">외부 접속 설정</div><div class="step-status">대기 중...</div></div>
+                        <div class="step-info"><div class="step-name">External Access Setup</div><div class="step-status">Waiting...</div></div>
                     </div>
                 </div>`;
             grid.appendChild(card);
             serviceCardsMap[serviceName] = card;
-            addLog(`🐳 K8s 배포 추적 시작: ${serviceName}`, 'info');
+            addLog(`🐳 K8s deployment tracking started: ${serviceName}`, 'info');
         }
 
         function updateServiceStep(serviceName, step, status, message) {
@@ -680,7 +680,7 @@
         function handleServiceFailure(serviceName, step, message) {
             const card = serviceCardsMap[serviceName];
             if (card) card.classList.add('failed');
-            const errorMsg = `서비스 [${serviceName}]의 ${step} 단계에서 실패: ${message}`;
+            const errorMsg = `Service [${serviceName}] failed at ${step} step: ${message}`;
             handleDeploymentFailure(errorMsg);
         }
 
@@ -688,9 +688,9 @@
             if (deploymentFailed) return;
             deploymentFailed = true;
             stopPolling();
-            updateStage(99, '❌ 배포 실패', '배포가 중단되었습니다');
-            showStatus('❌ 배포 실패: ' + reason, 'error');
-            addLog('❌ 배포 실패로 인한 연결 종료: ' + reason, 'stage-failed');
+            updateStage(99, '❌ Deployment Failed', 'Deployment has been stopped');
+            showStatus('❌ Deployment failed: ' + reason, 'error');
+            addLog('❌ Connection closed due to deployment failure: ' + reason, 'stage-failed');
             setTimeout(() => {
                 if (eventSource) { eventSource.close(); eventSource = null; }
                 document.getElementById('connectBtn').disabled = false;
