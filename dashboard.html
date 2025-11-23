@@ -805,7 +805,6 @@
                 if (e.data) {
                     globalIngressUrl = e.data.replace(/"/g, ''); // 따옴표 제거
                     console.log("Ingress URL Received:", globalIngressUrl);
-                    // UI 업데이트는 다음 대시보드 업데이트 주기 또는 즉시 반영 가능
                 }
             });
 
@@ -836,7 +835,7 @@
                 // [기능 1] 접속 버튼 HTML 생성
                 let linkBtnHtml = '';
                 if (globalIngressUrl) {
-                    const targetUrl = `${globalIngressUrl}/${serviceName}`; // Ingress 경로 규칙 적용
+                    const targetUrl = `${globalIngressUrl}/${serviceName}`;
                     linkBtnHtml = `
                         <button class="btn-link" onclick="window.open('${targetUrl}', '_blank')" title="Open in new tab">
                             🌐 Access
@@ -844,7 +843,7 @@
                     `;
                 }
 
-                // 2-1. 서비스 카드가 없으면 생성 (초기화)
+                // 2-1. 서비스 카드가 없으면 생성
                 if (!serviceCard) {
                     serviceCard = document.createElement('div');
                     serviceCard.className = 'metric-card';
@@ -869,7 +868,7 @@
                     grid.appendChild(serviceCard);
                     metricCards[serviceName] = serviceCard;
                 } else {
-                    // 2-2. 카드가 이미 존재할 때, Ingress 버튼이 뒤늦게 활성화될 수 있으므로 체크 후 추가
+                    // Ingress 버튼 동적 추가 (이미 카드가 있는 상태에서 URL 수신 시)
                     const controls = serviceCard.querySelector('.service-controls');
                     if (globalIngressUrl && !controls.querySelector('.btn-link')) {
                          const tempDiv = document.createElement('div');
@@ -880,37 +879,72 @@
                     }
                 }
 
-                // 2-3. 파드 리스트 업데이트
+                // 2-3. 파드 리스트 업데이트 (Diffing & Patching 방식)
                 const podContainer = serviceCard.querySelector('.pod-list-container');
                 const countLabel = serviceCard.querySelector('.pod-count');
                 if(countLabel) countLabel.textContent = `(${pods.length} pods)`;
 
-                podContainer.innerHTML = ''; // 기존 리스트 초기화
+                // 현재 수신된 파드 이름 목록 (삭제 대상 식별용)
+                const currentPodNames = new Set();
 
                 pods.forEach(pod => {
-                    const podEl = document.createElement('div');
-                    podEl.className = 'pod-item';
+                    currentPodNames.add(pod.podName);
+                    
+                    // 기존 요소 찾기 (data-pod 속성 활용)
+                    let podEl = podContainer.querySelector(`.pod-item[data-pod="${pod.podName}"]`);
 
                     const statusClass = pod.status === 'Running' ? 'running' :
                                       (pod.status === 'Pending' ? 'pending' : 'error');
-                    const shortPodName = pod.podName.split('-').slice(-2).join('-');
+                    
+                    if (podEl) {
+                        // [UPDATE] 기존 요소가 있으면 내용만 변경 (DOM 재생성 방지)
+                        const statusSpan = podEl.querySelector('.mc-status');
+                        if (!statusSpan.classList.contains(statusClass)) {
+                            statusSpan.className = `mc-status ${statusClass}`;
+                        }
+                        if (statusSpan.textContent !== pod.status) {
+                            statusSpan.textContent = pod.status;
+                        }
 
-                    podEl.innerHTML = `
-                        <div class="pod-header">
-                            <span class="pod-id" title="${pod.podName}">...${shortPodName}</span>
-                            <span class="mc-status ${statusClass}">${pod.status}</span>
-                        </div>
-                        <div class="pod-metrics">
-                            <div>CPU: <span>${pod.cpuUsage}</span></div>
-                            <div>MEM: <span>${pod.memoryUsage}</span></div>
-                            <div>Age: <span>${pod.age}</span></div>
-                        </div>
-                        <div class="pod-actions">
-                            <button class="btn-pod btn-log" onclick="viewLogs('${pod.podName}')">📜 Log</button>
-                            <button class="btn-pod btn-kill" onclick="restartPod('${pod.podName}')">🔄 Kill</button>
-                        </div>
-                    `;
-                    podContainer.appendChild(podEl);
+                        // 메트릭 업데이트
+                        const metrics = podEl.querySelectorAll('.pod-metrics span');
+                        if (metrics.length >= 3) {
+                            if(metrics[0].textContent !== pod.cpuUsage) metrics[0].textContent = pod.cpuUsage;
+                            if(metrics[1].textContent !== pod.memoryUsage) metrics[1].textContent = pod.memoryUsage;
+                            if(metrics[2].textContent !== pod.age) metrics[2].textContent = pod.age;
+                        }
+                    } else {
+                        // [CREATE] 요소가 없으면 새로 생성
+                        const shortPodName = pod.podName.split('-').slice(-2).join('-');
+                        podEl = document.createElement('div');
+                        podEl.className = 'pod-item';
+                        podEl.setAttribute('data-pod', pod.podName); // 식별자 추가
+
+                        podEl.innerHTML = `
+                            <div class="pod-header">
+                                <span class="pod-id" title="${pod.podName}">...${shortPodName}</span>
+                                <span class="mc-status ${statusClass}">${pod.status}</span>
+                            </div>
+                            <div class="pod-metrics">
+                                <div>CPU: <span>${pod.cpuUsage}</span></div>
+                                <div>MEM: <span>${pod.memoryUsage}</span></div>
+                                <div>Age: <span>${pod.age}</span></div>
+                            </div>
+                            <div class="pod-actions">
+                                <button class="btn-pod btn-log" onclick="viewLogs('${pod.podName}')">📜 Log</button>
+                                <button class="btn-pod btn-kill" onclick="restartPod('${pod.podName}')">🔄 Kill</button>
+                            </div>
+                        `;
+                        podContainer.appendChild(podEl);
+                    }
+                });
+
+                // [DELETE] 데이터에 없는 파드(삭제됨)는 DOM에서 제거
+                Array.from(podContainer.children).forEach(child => {
+                    const podName = child.getAttribute('data-pod');
+                    if (podName && !currentPodNames.has(podName)) {
+                        child.remove();
+                    }
                 });
             });
         }
@@ -918,7 +952,6 @@
         // === [기능 2] 실시간 로그 스트리밍 로직 ===
 
         function viewLogs(podName) {
-            // 기존에 열려있는 로그 연결이 있다면 종료
             if (logEventSource) {
                 logEventSource.close();
                 logEventSource = null;
@@ -930,39 +963,33 @@
 
             logModal.style.display = 'block';
             logTitle.textContent = `Logs: ${podName} (Live)`;
-            logTextDiv.textContent = ""; // 내용 초기화
+            logTextDiv.textContent = "";
 
-            // SSE 연결 시작 (기존 300줄 + 실시간)
             const sseUrl = `/api/management/logs/stream?pod=${encodeURIComponent(podName)}`;
             console.log(`Starting log stream: ${sseUrl}`);
 
             logEventSource = new EventSource(sseUrl);
 
             logEventSource.onmessage = function(event) {
-                // 데이터가 들어올 때마다 추가하고 스크롤을 맨 아래로 이동
                 logTextDiv.textContent += event.data + "\n";
                 logTextDiv.scrollTop = logTextDiv.scrollHeight;
             };
 
             logEventSource.onerror = function(err) {
                 console.error("Log Stream Error or Closed:", err);
-                // 연결이 끊기거나 에러 발생 시 메시지 표시 (선택사항)
-                // logTextDiv.textContent += "\n[Stream connection closed]";
                 logEventSource.close();
             };
         }
 
         function closeLogModal() {
             document.getElementById('logModal').style.display = 'none';
-            // 모달을 닫을 때 리소스 절약을 위해 SSE 연결 종료
             if (logEventSource) {
-                console.log("Closing log stream...");
                 logEventSource.close();
                 logEventSource = null;
             }
         }
 
-        // === 관리 기능 함수들 (기존 유지) ===
+        // === 관리 기능 함수들 ===
 
         function restartPod(podName) {
             if(!confirm(`⚠️ Warning: Are you sure you want to force terminate pod (${podName})?\nKubernetes will automatically create a new pod.`)) return;
@@ -1006,7 +1033,6 @@
             .catch(err => alert("Communication error: " + err));
         }
 
-        // 페이지를 떠날 때 모든 SSE 연결 정리
         window.addEventListener('beforeunload', () => {
             if (eventSource) eventSource.close();
             if (logEventSource) logEventSource.close();
